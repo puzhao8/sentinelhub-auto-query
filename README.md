@@ -1,0 +1,1 @@
+"# sentinelhub-auto-query" 
