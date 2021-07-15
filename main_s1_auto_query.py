@@ -129,24 +129,13 @@ print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['produ
 
 
 
-### download all once.
-to_download_products = {}
-for filename in TO_SAVE["results"]['products_list']:
-    uuid = TO_SAVE["products"][filename]['uuid']
-    to_download_products[uuid] = TO_SAVE["products"][filename]
-
-# print(to_download_products)
-
-api.download_all(to_download_products, directory_path=savePath, 
-            max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
-
-
-### If a product doesn't exist, then download one by one.
+""" If a product doesn't exist, then download one by one. """ 
 if True:
     dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1")
     # for key in products.keys():
     for filename in TO_SAVE["results"]['products_list']:
         # filename = products[key]['title']
+        uuid = TO_SAVE["products"][filename]['uuid']
 
         if os.path.exists(str(dataPath / f"{filename}.zip")):
             print("existed: " + filename)
@@ -160,10 +149,24 @@ if True:
 
                 try:
                     print("Tried in ==> {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-                    api.download(key, dataPath)
+                    api.download(uuid, dataPath)
                     whileFlag = False
 
                 except:
                     whileFlag = True
 
                     time.sleep(10*60)
+
+
+
+""" download all once. """
+if False:
+    to_download_products = {}
+    for filename in TO_SAVE["results"]['products_list']:
+        uuid = TO_SAVE["products"][filename]['uuid']
+        to_download_products[uuid] = TO_SAVE["products"][filename]
+
+    # print(to_download_products)
+
+    api.download_all(to_download_products, directory_path=savePath, 
+                max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
