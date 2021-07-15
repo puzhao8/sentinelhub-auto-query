@@ -1,24 +1,10 @@
 <graph id="S1 GRD preprocessing">
   <version>1.0</version>
-  <!-- 
-    <root xmlns:copyright="http://www.w3.org/1999/xhtml">
-      <metadata>
-        <author name="Federico Filipponi" />
-        <author contact="federico.filipponi@gmail.com" />
-        <copyright name="CC BY-SA" />
-        <license type="GPL" />
-        <license version="3" />
-      </metadata>
-    </root>
-  -->
-  <!-- usage example: 
-    /opt/snap/bin/gpt S1_GRD_preprocessing.xml -Presolution=10 -Porigin=5 -Pfilter='None' -Pdem='SRTM 3Sec' -Pcrs='GEOGCS["WGS84(DD)", DATUM["WGS84", SPHEROID["WGS84", 6378137.0, 298.257223563]], PRIMEM["Greenwich", 0.0], UNIT["degree", 0.017453292519943295], AXIS["Geodetic longitude", EAST], AXIS["Geodetic latitude", NORTH]]' -Pinput=/media/workspace/S1A_IW_GRDH_1SDV_20160228T051920_20160228T051956_010142_00EF52_AB5E.SAFE -Poutput=/media/workspace/S1A_IW_GRDH_1SDV_20160228T051920_20160228T051956_010142_00EF52_AB5E.dim
-  -->
   <node id="Read">
     <operator>Read</operator>
     <sources/>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>${input}</file>
+      <file>G:\PyProjects\sentinelhub-auto-query\data\S1\S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B.zip</file>
     </parameters>
   </node>
   <node id="Apply-Orbit-File">
@@ -51,7 +37,7 @@
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <selectedPolarisations/>
       <borderLimit>500</borderLimit>
-      <trimThreshold>50</trimThreshold>
+      <trimThreshold>50.0</trimThreshold>
     </parameters>
   </node>
   <node id="Calibration-Sigma">
@@ -73,58 +59,47 @@
       <outputBetaBand>false</outputBetaBand>
     </parameters>
   </node>
-  <node id="Speckle-Filter">
-    <operator>Speckle-Filter</operator>
+  <node id="Terrain-Correction">
+    <operator>Terrain-Correction</operator>
     <sources>
       <sourceProduct refid="Calibration-Sigma"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
-      <filter>${filter}</filter>
-      <filterSizeX>3</filterSizeX>
-      <filterSizeY>3</filterSizeY>
-      <dampingFactor>2</dampingFactor>
-      <estimateENL>true</estimateENL>
-      <enl>1.0</enl>
-      <numLooksStr>1</numLooksStr>
-      <windowSize>7x7</windowSize>
-      <targetWindowSizeStr>3x3</targetWindowSizeStr>
-      <sigmaStr>0.9</sigmaStr>
-      <anSize>50</anSize>
-    </parameters>
-  </node>
-  <node id="Terrain-Correction">
-    <operator>Terrain-Correction</operator>
-    <sources>
-      <sourceProduct refid="Speckle-Filter"/>
-    </sources>    
-    <parameters>
-        <sourceBands/>
-        <demName>${dem}</demName>
-        <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
-        <externalDEMApplyEGM>true</externalDEMApplyEGM>
-        <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
-        <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
-        <pixelSpacingInMeter>${resolution}</pixelSpacingInMeter>
-        <mapProjection>${crs}</mapProjection>
-        <alignToStandardGrid>true</alignToStandardGrid>
-        <standardGridOriginX>${origin}</standardGridOriginX>
-        <standardGridOriginY>${origin}</standardGridOriginY>
-        <nodataValueAtSea>false</nodataValueAtSea>
-        <saveDEM>false</saveDEM>
-        <saveLatLon>false</saveLatLon>
-        <saveIncidenceAngleFromEllipsoid>false</saveIncidenceAngleFromEllipsoid>
-        <saveLocalIncidenceAngle>false</saveLocalIncidenceAngle>
-        <saveProjectedLocalIncidenceAngle>false</saveProjectedLocalIncidenceAngle>
-        <saveSelectedSourceBand>true</saveSelectedSourceBand>
-        <outputComplex>false</outputComplex>
-        <applyRadiometricNormalization>false</applyRadiometricNormalization>
-        <saveSigmaNought>false</saveSigmaNought>
-        <saveGammaNought>false</saveGammaNought>
-        <saveBetaNought>false</saveBetaNought>
-        <incidenceAngleForSigma0>Use projected local incidence angle from DEM</incidenceAngleForSigma0>
-        <incidenceAngleForGamma0>Use projected local incidence angle from DEM</incidenceAngleForGamma0>
-        <auxFile>Latest Auxiliary File</auxFile>
+      <demName>ACE2_5Min</demName>
+      <externalDEMFile/>
+      <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
+      <externalDEMApplyEGM>true</externalDEMApplyEGM>
+      <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
+      <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
+      <pixelSpacingInMeter>0.0</pixelSpacingInMeter>
+      <pixelSpacingInDegree>0.0</pixelSpacingInDegree>
+      <mapProjection>GEOGCS[&quot;WGS84(DD)&quot;, 
+  DATUM[&quot;WGS84&quot;, 
+    SPHEROID[&quot;WGS84&quot;, 6378137.0, 298.257223563]], 
+  PRIMEM[&quot;Greenwich&quot;, 0.0], 
+  UNIT[&quot;degree&quot;, 0.017453292519943295], 
+  AXIS[&quot;Geodetic longitude&quot;, EAST], 
+  AXIS[&quot;Geodetic latitude&quot;, NORTH]]</mapProjection>
+      <alignToStandardGrid>true</alignToStandardGrid>
+      <standardGridOriginX>0.0</standardGridOriginX>
+      <standardGridOriginY>0.0</standardGridOriginY>
+      <nodataValueAtSea>false</nodataValueAtSea>
+      <saveDEM>false</saveDEM>
+      <saveLatLon>false</saveLatLon>
+      <saveIncidenceAngleFromEllipsoid>false</saveIncidenceAngleFromEllipsoid>
+      <saveLocalIncidenceAngle>false</saveLocalIncidenceAngle>
+      <saveProjectedLocalIncidenceAngle>false</saveProjectedLocalIncidenceAngle>
+      <saveSelectedSourceBand>true</saveSelectedSourceBand>
+      <outputComplex>false</outputComplex>
+      <applyRadiometricNormalization>false</applyRadiometricNormalization>
+      <saveSigmaNought>false</saveSigmaNought>
+      <saveGammaNought>false</saveGammaNought>
+      <saveBetaNought>false</saveBetaNought>
+      <incidenceAngleForSigma0>Use projected local incidence angle from DEM</incidenceAngleForSigma0>
+      <incidenceAngleForGamma0>Use projected local incidence angle from DEM</incidenceAngleForGamma0>
+      <auxFile>Latest Auxiliary File</auxFile>
+      <externalAuxFile/>
     </parameters>
   </node>
   <node id="LinearToFromdB">
@@ -142,8 +117,8 @@
       <sourceProduct refid="LinearToFromdB"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>${output}</file>
-      <formatName>BEAM-DIMAP</formatName>
+      <file>G:\PyProjects\sentinelhub-auto-query\data\S1\S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B.tif</file>
+      <formatName>GeoTIFF</formatName>
     </parameters>
   </node>
   <applicationData id="Presentation">
@@ -161,10 +136,7 @@
       <displayPosition x="30.0" y="120.0"/>
     </node>
     <node id="Calibration-Sigma">
-      <displayPosition x="30.0" y="150.0"/>
-    </node>
-    <node id="Speckle-Filter">
-      <displayPosition x="30.0" y="180.0"/>
+      <displayPosition x="69.0" y="157.0"/>
     </node>
     <node id="Terrain-Correction">
       <displayPosition x="30.0" y="210.0"/>
