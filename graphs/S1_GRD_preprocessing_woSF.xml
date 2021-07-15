@@ -66,20 +66,20 @@
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
-      <demName>ACE2_5Min</demName>
+      <demName>SRTM 3Sec</demName>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
       <externalDEMApplyEGM>true</externalDEMApplyEGM>
       <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
       <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
-      <pixelSpacingInMeter>0.0</pixelSpacingInMeter>
-      <pixelSpacingInDegree>0.0</pixelSpacingInDegree>
-      <mapProjection>GEOGCS[&quot;WGS84(DD)&quot;, 
-  DATUM[&quot;WGS84&quot;, 
-    SPHEROID[&quot;WGS84&quot;, 6378137.0, 298.257223563]], 
-  PRIMEM[&quot;Greenwich&quot;, 0.0], 
-  UNIT[&quot;degree&quot;, 0.017453292519943295], 
-  AXIS[&quot;Geodetic longitude&quot;, EAST], 
+      <pixelSpacingInMeter>20.0</pixelSpacingInMeter>
+      <pixelSpacingInDegree>1.796630568239043E-4</pixelSpacingInDegree>
+      <mapProjection>GEOGCS[&quot;WGS84(DD)&quot;, &#xd;
+  DATUM[&quot;WGS84&quot;, &#xd;
+    SPHEROID[&quot;WGS84&quot;, 6378137.0, 298.257223563]], &#xd;
+  PRIMEM[&quot;Greenwich&quot;, 0.0], &#xd;
+  UNIT[&quot;degree&quot;, 0.017453292519943295], &#xd;
+  AXIS[&quot;Geodetic longitude&quot;, EAST], &#xd;
   AXIS[&quot;Geodetic latitude&quot;, NORTH]]</mapProjection>
       <alignToStandardGrid>true</alignToStandardGrid>
       <standardGridOriginX>0.0</standardGridOriginX>
@@ -108,7 +108,7 @@
       <sourceProduct refid="Terrain-Correction"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <sourceBands/>
+      <sourceBands>Sigma0_VH,Sigma0_VV</sourceBands>
     </parameters>
   </node>
   <node id="Write">
@@ -117,8 +117,8 @@
       <sourceProduct refid="LinearToFromdB"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>G:\PyProjects\sentinelhub-auto-query\data\S1\S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B.tif</file>
-      <formatName>GeoTIFF</formatName>
+      <file>G:\PyProjects\sentinelhub-auto-query\outputs\S1\S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B.tif</file>
+      <formatName>GeoTIFF-BigTIFF</formatName>
     </parameters>
   </node>
   <applicationData id="Presentation">
