@@ -26,7 +26,7 @@ api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
 
 cfg = edict({
     "roi_url": "inputs/BC_ROI_2.geojson",
-    "start_date": "2021-07-10",
+    "start_date": "2021-07-13",
     "end_date": "2021-08-01",
 
     "platformname": "Sentinel-1",
@@ -55,6 +55,7 @@ products = api.query(
                         # filename='S1A*'
                     )
 
+# print(products['0c05435b-0cd3-45a0-93f4-8c317eb1d558'])
 print("\n\n===========> Sentinel Auto-Query <============")
 
 products_df = api.to_dataframe(products)
@@ -115,10 +116,8 @@ with open(str(json_url), 'w') as fp:
 
 print()
 print(footprint)
-print("\nTotal Number of Searched Products:" + str(len(products.keys())))
+print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['products_list'])))
 
-
-# api.download_all(products, savePath)
 
 
 # print("\nData to download ...")
@@ -131,15 +130,25 @@ print("\nTotal Number of Searched Products:" + str(len(products.keys())))
 
 
 ### download all once.
-# api.download_all(products, directory_path=savePath)
+to_download_products = {}
+for filename in TO_SAVE["results"]['products_list']:
+    uuid = TO_SAVE["products"][filename]['uuid']
+    to_download_products[uuid] = TO_SAVE["products"][filename]
+
+# print(to_download_products)
+
+api.download_all(to_download_products, directory_path=savePath, 
+            max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
 
 
 ### If a product doesn't exist, then download one by one.
-if False:
-    for key in products.keys():
-        filename = products[key]['title']
+if True:
+    dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1")
+    # for key in products.keys():
+    for filename in TO_SAVE["results"]['products_list']:
+        # filename = products[key]['title']
 
-        if os.path.exists(str(savePath / "{filename}.zip")):
+        if os.path.exists(str(dataPath / f"{filename}.zip")):
             print("existed: " + filename)
 
         else:
@@ -151,7 +160,7 @@ if False:
 
                 try:
                     print("Tried in ==> {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-                    api.download(key, savePath)
+                    api.download(key, dataPath)
                     whileFlag = False
 
                 except:
