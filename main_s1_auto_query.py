@@ -25,7 +25,7 @@ api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
 # api = SentinelAPI('ahui0911', '19940911', 'https://scihub.copernicus.eu/dhus')
 
 cfg = edict({
-    "roi_url": "inputs/BC_ROI_1.geojson",
+    "roi_url": "inputs/BC_ROI_2.geojson",
     "start_date": "2021-07-10",
     "end_date": "2021-08-01",
 
@@ -77,10 +77,10 @@ for product_id in products_dict.keys():
     
     title = products_dict[product_id]['title']
     flag = ee.Algorithms.If(S1.filter(ee.Filter.eq("system:index", title)).size().gt(0), True, False)
-    # print(title, flag.getInfo())
+    print(title, flag.getInfo())
     if not flag.getInfo(): # if this product is not available in GEE
         # print(title)
-        print(title, flag.getInfo())
+        # print(title, flag.getInfo())
         products_to_save[title] = {key: products_dict[product_id][key] for key in property_list}
         # products_to_save[title]['product_id'] = product_id
 
@@ -100,9 +100,15 @@ TO_SAVE["results"]['orbKey_list'] = list(set([products_to_save[product]['orbit_k
 TO_SAVE["cfg"] = cfg
 
 
-# save to json
 roi_name = os.path.split(cfg.roi_url)[-1].split(".")[0]
-json_url = workpath / "outputs" / (roi_name + "_notInGEE.json")
+savePath = workpath / "outputs" / roi_name
+if not os.path.exists(str(savePath)):
+    os.makedirs(savePath)
+
+# save to json
+json_url = savePath / "S1.json"
+print("\njson_url: " + str(json_url))
+
 with open(str(json_url), 'w') as fp:
     json.dump(edict(TO_SAVE), fp, ensure_ascii=False, indent=4)
 
@@ -111,11 +117,8 @@ print()
 print(footprint)
 print("\nTotal Number of Searched Products:" + str(len(products.keys())))
 
-savePath = workpath / "outputs" / roi_name
-if not os.path.exists(str(savePath)):
-    os.makedirs(savePath)
 
-api.download_all(products, savePath)
+# api.download_all(products, savePath)
 
 
 # print("\nData to download ...")

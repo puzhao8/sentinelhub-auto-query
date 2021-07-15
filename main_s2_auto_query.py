@@ -25,8 +25,8 @@ def is_jsonable(x):
 api = SentinelAPI('ahui0911', '19940911', 'https://scihub.copernicus.eu/dhus')
 
 cfg = edict({
-    "roi_url": "inputs/BC_ROI_1.geojson",
-    "start_date": "2021-07-10",
+    "roi_url": "inputs/BC_ROI_2.geojson",
+    "start_date": "2021-07-14",
     "end_date": "2021-08-01",
 
     "platformname": "Sentinel-2",
@@ -55,7 +55,7 @@ products = api.query(
                         # filename='S1A*'
                     )
 
-print("\n\n===========> Sentinel Auto-Query <============")
+print("\n\n===========> Sentinel-2 Auto-Query <============")
 
 products_df = api.to_dataframe(products)
 # print(products_df.keys())
@@ -70,24 +70,20 @@ property_list = [key for key in example_dict.keys() if is_jsonable(example_dict[
 
 
 # select property for saving to json
-orbit_dict = {'ASCENDING': 'ASC', 'DESCENDING': 'DSC'}
 products_to_save = edict()
-S1 = ee.ImageCollection("COPERNICUS/S1_GRD")
+S2 = ee.ImageCollection("COPERNICUS/S2")
 for product_id in products_dict.keys():
     
     title = products_dict[product_id]['title']
-    flag = ee.Algorithms.If(S1.filter(ee.Filter.eq("system:index", title)).size().gt(0), True, False)
-    # print(title, flag.getInfo())
+    flag = ee.Algorithms.If(S2.filter(ee.Filter.eq("PRODUCT_ID", title)).size().gt(0), True, False)
+    print(title, flag.getInfo())
+
     if not flag.getInfo(): # if this product is not available in GEE
         # print(title)
-        print(title, flag.getInfo())
+        # print(title, flag.getInfo())
         products_to_save[title] = {key: products_dict[product_id][key] for key in property_list}
         # products_to_save[title]['product_id'] = product_id
 
-        orbit_direction = products_dict[product_id]['orbitdirection']
-        orbit_num = products_dict[product_id]['relativeorbitnumber']
-
-        products_to_save[title]['orbit_key'] = orbit_dict[orbit_direction] + "_" + str(orbit_num)
 
 TO_SAVE = edict()
 TO_SAVE["products"] = products_to_save
@@ -95,14 +91,18 @@ TO_SAVE["products"] = products_to_save
 TO_SAVE["results"] = edict()
 TO_SAVE["results"]['total_number'] = len(products_to_save.keys())
 TO_SAVE["results"]['products_list'] = sorted(list(products_to_save.keys()))
-TO_SAVE["results"]['orbKey_list'] = list(set([products_to_save[product]['orbit_key'] for product in list(products_to_save.keys())]))
+# TO_SAVE["results"]['orbKey_list'] = list(set([products_to_save[product]['orbit_key'] for product in list(products_to_save.keys())]))
 
 TO_SAVE["cfg"] = cfg
 
 
-# save to json
 roi_name = os.path.split(cfg.roi_url)[-1].split(".")[0]
-json_url = workpath / "outputs" / (roi_name + "S2_notInGEE.json")
+savePath = workpath / "outputs" / roi_name / cfg.platformname
+if not os.path.exists(str(savePath)):
+    os.makedirs(savePath)
+
+# save to json
+json_url = savePath / "S2.json"
 with open(str(json_url), 'w') as fp:
     json.dump(edict(TO_SAVE), fp, ensure_ascii=False, indent=4)
 
@@ -111,9 +111,7 @@ print()
 print(footprint)
 print("\nTotal Number of Searched Products:" + str(len(products.keys())))
 
-savePath = workpath / "outputs" / roi_name / cfg.platformname
-if not os.path.exists(str(savePath)):
-    os.makedirs(savePath)
+
 
 # api.download_all(products, savePath)
 
