@@ -2,6 +2,7 @@
 # Reference
 # https://sentinelsat.readthedocs.io/en/master/_modules/sentinelsat/sentinel.html?highlight=offline#
 
+from inspect import indentsize
 import time, os
 import json
 import datetime
@@ -13,6 +14,7 @@ from prettyprinter import pprint
 from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
 
 import ee
+import sentinelsat
 ee.Initialize()
 
 
@@ -28,12 +30,12 @@ api = SentinelAPI('ahui0911', '19940911', 'https://scihub.copernicus.eu/dhus')
 
 now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 today = datetime.today().strftime("%Y-%m-%d")
-start_date = (datetime.today() + timedelta(-3)).strftime("%Y-%m-%d")
+start_date = (datetime.today() + timedelta(-2)).strftime("%Y-%m-%d")
 end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
 print("now: ", now)
 
 cfg = edict({
-    "roi_url": "inputs/BC_ROI_2.geojson",
+    "roi_url": "inputs/BC_ROIs.geojson",
     "query_date": today,
     "start_date": start_date,
     "end_date": end_date,
@@ -43,11 +45,20 @@ cfg = edict({
     # 'relativeorbitnumber': 84,
     # "orbitdirection": "ASCENDING",
 
-    "download_all": False, # download all once
-    "download_one": True # download one by one
+    "download_one": True, # download one by one
+    "download_all": True, # download all once
 
 })
 
+cfg.download_all = False if cfg.download_one  else True
+
+# cmd
+def sentinelsat_cmd_download(uuid, filename, path):
+    user = "ahui0911"
+    password = "19940911"
+    geojson_url = path / f"{filename}.geojson"
+    os.system(f"sentinelsat -u {user} -p {password}  --uuid {uuid} -d --path {path} \
+        --footprints {geojson_url}")
 
 
 workpath = Path(os.getcwd())
@@ -71,6 +82,8 @@ products = api.query(
 
 # print(products['0c05435b-0cd3-45a0-93f4-8c317eb1d558'])
 print("\n\n===========> Sentinel Auto-Query <============")
+
+
 
 products_df = api.to_dataframe(products)
 # print(products_df.keys())
@@ -128,19 +141,15 @@ with open(str(json_url), 'w') as fp:
     json.dump(edict(TO_SAVE), fp, ensure_ascii=False, indent=4)
 
 
+""" save as geojson """
+import geojson
+with open(savePath / f"S1_{cfg.producttype}_{now}.geojson", 'w') as fp:
+   geojson.dump(api.to_geojson(products), fp, indent=4)
+
+
 print()
 print(footprint)
 print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['products_list'])))
-
-
-
-# print("\nData to download ...")
-# print("------------------------------------------------------------------")
-# for key in products.keys():
-#     filename = products[key]['title']
-#     print(filename)
-# print("------------------------------------------------------------------")
-
 
 
 """ If a product doesn't exist, then download one by one. """ 
@@ -153,25 +162,9 @@ if cfg.download_one:
 
         if os.path.exists(str(dataPath / f"{filename}.zip")):
             print(filename + " existed!")
-
         else:
-            # print(filename)
-
-            whileFlag = True
-            while whileFlag:
-                # print("Downloading: " + filename)
-
-                try:
-                    print(filename + " Tried in ==> {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-                    api.download(uuid, dataPath)
-                    whileFlag = False
-
-                except:
-                    print(filename + " exception!")
-                    whileFlag = True
-
-                    time.sleep(10*60)
-
+            sentinelsat_cmd_download(uuid, filename, dataPath)
+            # api.download(id=uuid, directory_path=dataPath, checksum=True)
 
 
 """ download all once. """
@@ -183,5 +176,13 @@ if cfg.download_all:
 
     # print(to_download_products)
 
-    api.download_all(to_download_products, directory_path=savePath, 
+    # api.download_all(to_download_products, directory_path=savePath, 
+    #             max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
+
+    api.download_all(products_df.index, directory_path=savePath, 
                 max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
+
+
+
+
+    
