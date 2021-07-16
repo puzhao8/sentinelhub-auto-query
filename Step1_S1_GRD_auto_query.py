@@ -39,7 +39,7 @@ cfg = edict({
     "end_date": end_date,
 
     "platformname": "Sentinel-1",
-    "producttype": 'GRD',
+    "producttype": 'SLC',
     # 'relativeorbitnumber': 84,
     # "orbitdirection": "ASCENDING",
 
@@ -87,7 +87,7 @@ property_list = [key for key in example_dict.keys() if is_jsonable(example_dict[
 # select property for saving to json
 orbit_dict = {'ASCENDING': 'ASC', 'DESCENDING': 'DSC'}
 products_to_save = edict()
-S1 = ee.ImageCollection("COPERNICUS/S1_GRD")
+S1 = ee.ImageCollection(f"COPERNICUS/S1_GRD")
 for product_id in products_dict.keys():
     
     title = products_dict[product_id]['title']
@@ -121,7 +121,7 @@ if not os.path.exists(str(savePath)):
     os.makedirs(savePath)
 
 # save to json
-json_url = savePath / f"S1_GRD_{now}.json"
+json_url = savePath / f"S1_{cfg.producttype}_{now}.json"
 print("\njson_url: " + str(json_url))
 
 with open(str(json_url), 'w') as fp:
