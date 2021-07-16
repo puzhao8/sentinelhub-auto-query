@@ -82,11 +82,12 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, upload_flag=True):
     
         """ Upload COG into GCS """
         os.system(f"gsutil -m cp -r {savePath}/* {gs_dir}")
+        imgCol_name = os.path.split(gs_dir)[-1]
 
         """ Upload to earth engine asset """
         for filename in fileList:
             print(f"\n{filename[:-4]}")
-            asset_id = f"users/omegazhangpzh/Sentinel1/{filename[:-4]}"
+            asset_id = f"users/omegazhangpzh/{imgCol_name}/{filename[:-4]}"
             os.system(f"earthengine upload image --asset_id={asset_id} {gs_dir}/{filename}")
 
 
