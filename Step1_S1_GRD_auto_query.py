@@ -33,7 +33,7 @@ end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
 print("now: ", now)
 
 cfg = edict({
-    "roi_url": "inputs/BC_ROI_1.geojson",
+    "roi_url": "inputs/BC_ROI_2.geojson",
     "query_date": today,
     "start_date": start_date,
     "end_date": end_date,
