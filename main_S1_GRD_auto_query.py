@@ -5,6 +5,7 @@
 import time, os
 import json
 import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from easydict import EasyDict as edict
 from prettyprinter import pprint
@@ -14,6 +15,7 @@ from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
 import ee
 ee.Initialize()
 
+
 def is_jsonable(x):
     try:
         json.dumps(x)
@@ -21,20 +23,32 @@ def is_jsonable(x):
     except (TypeError, OverflowError):
         return False
 
-api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
-# api = SentinelAPI('ahui0911', '19940911', 'https://scihub.copernicus.eu/dhus')
+# api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
+api = SentinelAPI('ahui0911', '19940911', 'https://scihub.copernicus.eu/dhus')
+
+now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+today = datetime.today().strftime("%Y-%m-%d")
+start_date = (datetime.today() + timedelta(-3)).strftime("%Y-%m-%d")
+end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
+print("now: ", now)
 
 cfg = edict({
     "roi_url": "inputs/BC_ROI_2.geojson",
-    "start_date": "2021-07-13",
-    "end_date": "2021-08-01",
+    "query_date": today,
+    "start_date": start_date,
+    "end_date": end_date,
 
     "platformname": "Sentinel-1",
     "producttype": 'GRD',
     # 'relativeorbitnumber': 84,
     # "orbitdirection": "ASCENDING",
 
+    "download_all": False, # download all once
+    "download_one": True # download one by one
+
 })
+
+
 
 workpath = Path(os.getcwd())
 footprint = geojson_to_wkt(read_geojson(str(workpath / cfg.roi_url)))
@@ -77,9 +91,9 @@ S1 = ee.ImageCollection("COPERNICUS/S1_GRD")
 for product_id in products_dict.keys():
     
     title = products_dict[product_id]['title']
-    flag = ee.Algorithms.If(S1.filter(ee.Filter.eq("system:index", title)).size().gt(0), True, False)
-    print(title, flag.getInfo())
-    if not flag.getInfo(): # if this product is not available in GEE
+    flag = (S1.filter(ee.Filter.eq("system:index", title)).size().getInfo()) > 0 
+    print(title, flag)
+    if not flag: # if this product is not available in GEE
         # print(title)
         # print(title, flag.getInfo())
         products_to_save[title] = {key: products_dict[product_id][key] for key in property_list}
@@ -107,7 +121,7 @@ if not os.path.exists(str(savePath)):
     os.makedirs(savePath)
 
 # save to json
-json_url = savePath / "S1.json"
+json_url = savePath / f"S1_GRD_{now}.json"
 print("\njson_url: " + str(json_url))
 
 with open(str(json_url), 'w') as fp:
@@ -130,29 +144,30 @@ print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['produ
 
 
 """ If a product doesn't exist, then download one by one. """ 
-if True:
-    dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1")
+if cfg.download_one:
+    dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1_GRD")
     # for key in products.keys():
     for filename in TO_SAVE["results"]['products_list']:
         # filename = products[key]['title']
         uuid = TO_SAVE["products"][filename]['uuid']
 
         if os.path.exists(str(dataPath / f"{filename}.zip")):
-            print("existed: " + filename)
+            print(filename + " existed!")
 
         else:
-            print(filename)
+            # print(filename)
 
             whileFlag = True
             while whileFlag:
                 # print("Downloading: " + filename)
 
                 try:
-                    print("Tried in ==> {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                    print(filename + " Tried in ==> {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
                     api.download(uuid, dataPath)
                     whileFlag = False
 
                 except:
+                    print(filename + " exception!")
                     whileFlag = True
 
                     time.sleep(10*60)
@@ -160,7 +175,7 @@ if True:
 
 
 """ download all once. """
-if False:
+if cfg.download_all:
     to_download_products = {}
     for filename in TO_SAVE["results"]['products_list']:
         uuid = TO_SAVE["products"][filename]['uuid']
