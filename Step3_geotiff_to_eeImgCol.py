@@ -105,6 +105,7 @@ if upload_flag:
     task_dict = {}
     for filename in fileList:
         print(f"\n{filename[:-4]}")
+        print("--------------------------------------------------------------------")
 
         asset_id = f"users/omegazhangpzh/Sentinel1/{filename[:-4]}"
         ee_upload_image = f"earthengine upload image --asset_id={asset_id} {gs_dir}/{filename}"
@@ -113,9 +114,8 @@ if upload_flag:
         task_id = ee_upload_response.split("ID: ")[-1]
         task_dict.update({filename: {'task_id': task_id, 'asset_id': asset_id}})
 
-        print(f"\n{asset_id}")
-        pprint(f"task id: {task_id}")
-
+        print(f"{asset_id}")
+        pprint(f"task id: {task_id}\n")
 
 
     """ get property json """
@@ -152,7 +152,7 @@ if upload_flag:
                 upload_finish_flag = False
 
             # check_asset_permission(asset_id)
-            print(f"{asset_id}: {state}")
+            print(f"\n{asset_id}: {state}")
 
         print()
         # pprint(task_dict)
