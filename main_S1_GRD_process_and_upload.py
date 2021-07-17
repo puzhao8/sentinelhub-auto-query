@@ -1,4 +1,6 @@
 
+# coding: future_fstrings
+
 import os
 from pathlib import Path
 from prettyprinter import pprint
@@ -83,8 +85,9 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, upload_flag=True):
         """ Upload COG into GCS """
         os.system(f"gsutil -m cp -r {savePath}/* {gs_dir}")
         os.rmdir(savePath) # delete cog folder after uploading.
-        
+
         imgCol_name = os.path.split(gs_dir)[-1]
+        print(f"imgCol_name: {imgCol_name}")
 
         """ Upload to earth engine asset """
         for filename in fileList:

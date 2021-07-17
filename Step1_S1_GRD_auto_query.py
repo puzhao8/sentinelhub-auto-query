@@ -154,7 +154,8 @@ print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['produ
 
 """ If a product doesn't exist, then download one by one. """ 
 if cfg.download_one:
-    dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1_GRD")
+    # dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1_GRD")
+    dataPath = workpath / "data" / "S1_GRD"
     # for key in products.keys():
     for filename in TO_SAVE["results"]['products_list']:
         # filename = products[key]['title']
