@@ -48,7 +48,7 @@ if __name__ == "__main__":
     cfg = edict({
         "roi_url": "inputs/BC_ROIs.geojson",
         'placename': "British Columbia",
-        "query_by": "roi",
+        "query_by": "roi", # 'place' has problem
 
         "query_date": today,
         "start_date": start_date,
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     if cfg.platformname == "Sentinel-1": 
         cfg.checkProperty = "system:index"
-        cfg.check_eeImgCol = "COPERNICUS/S1"
+        cfg.check_eeImgCol = "COPERNICUS/S1_GRD"
 
     if cfg.platformname == "Sentinel-2": 
         cfg.checkProperty = "system:index"
