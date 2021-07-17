@@ -58,5 +58,7 @@ for filename in os.listdir(str(input_folder)):
 
     if not os.path.exists(str(output_url)):
         S1_GRD_Preprocessing(graph, input_url, output_url)
+    else: 
+        print("alread processed!")
 
 
