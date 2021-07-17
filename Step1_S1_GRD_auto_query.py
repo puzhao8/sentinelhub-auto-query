@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
-    start_date = (datetime.today() + timedelta(-2)).strftime("%Y-%m-%d")
+    start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
     end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
     print("now: ", now)
 
@@ -54,11 +54,12 @@ if __name__ == "__main__":
         "start_date": start_date,
         "end_date": end_date,
 
-        "platformname": "Sentinel-1",
-        "producttype": 'GRD',
+        "platformname": "Sentinel-2",
+        "producttype": 'S2MSI1C',
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
+        "download_flag": True,
         "download_one": True, # download one by one
         "download_all": True, # download all once
 
@@ -69,19 +70,22 @@ if __name__ == "__main__":
         'Sentinel-2': 'S2',
         'Sentinel-3': 'S3'
     }
+    SAT = Sat_Abb_Dict[cfg.platformname]
 
-    savePath = workpath / "data" / f"{Sat_Abb_Dict[cfg.platformname]}_{cfg.producttype}"
+    savePath = workpath / "data" / f"{SAT}_{cfg.producttype}"
     if not os.path.exists(savePath): os.makedirs(savePath)
 
     cfg.download_all = False if cfg.download_one  else True
+    cfg.download_all = cfg.download_all and cfg.download_flag
+    cfg.download_one = cfg.download_one and cfg.download_flag
 
     if cfg.platformname == "Sentinel-1": 
         cfg.checkProperty = "system:index"
         cfg.check_eeImgCol = "COPERNICUS/S1_GRD"
 
     if cfg.platformname == "Sentinel-2": 
-        cfg.checkProperty = "system:index"
-        cfg.check_eeImgCol = "COPERNICUS/S2"  if cfg.producttype == "GRD" else "COPERNICUS/S2_SR"
+        cfg.checkProperty = "PRODUCT_ID"
+        cfg.check_eeImgCol = "COPERNICUS/S2"  if 'S2MSI1C' == cfg.producttype else "COPERNICUS/S2_SR"
         
     if cfg.query_by == "roi":
         footprint = geojson_to_wkt(read_geojson(str(workpath / cfg.roi_url)))
@@ -107,8 +111,6 @@ if __name__ == "__main__":
 
     # print(products['0c05435b-0cd3-45a0-93f4-8c317eb1d558'])
     print("\n\n===========> Sentinel Auto-Query <============")
-
-
 
     products_df = api.to_dataframe(products)
     # print(products_df.keys())
@@ -158,7 +160,7 @@ if __name__ == "__main__":
         os.makedirs(jsonPath)
 
     # save to json
-    json_url = jsonPath / f"S1_{cfg.producttype}_{now}.json"
+    json_url = jsonPath / f"{SAT}_{cfg.producttype}_{now}.json"
     print("\njson_url: " + str(json_url))
 
     with open(str(json_url), 'w') as fp:
@@ -187,7 +189,7 @@ if __name__ == "__main__":
             uuid = TO_SAVE["products"][filename]['uuid']
 
             if os.path.exists(str(savePath / f"{filename}.zip")):
-                print(filename + " existed!")
+                print(filename + " [existed!]")
             else:
                 
                 sentinelsat_cmd_download(uuid, filename, savePath)

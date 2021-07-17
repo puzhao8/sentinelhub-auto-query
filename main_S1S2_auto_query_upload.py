@@ -210,9 +210,10 @@ if __name__ == "__main__":
     ### update input and output url
     graphFile = FileReader("G:\PyProjects\sentinelhub-auto-query\graphs\S1_GRD_preprocessing_GEE.xml")
 
-    input_folder = Path("G:/PyProjects/sentinelhub-auto-query/data/S1_GRD_0716")
-    output_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/S1_GRD_0716")
-    gs_dir = "gs://wildfire-nrt/Sentinel1_test"
+    folder = "S1_GRD_0716"
+    input_folder = Path("G:/PyProjects/sentinelhub-auto-query/data") / folder
+    output_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs") / folder
+    gs_dir = "gs://wildfire-nrt/Sentinel2"
 
     """ get property json """
     json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
