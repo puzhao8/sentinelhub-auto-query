@@ -156,6 +156,7 @@ print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['produ
 if cfg.download_one:
     # dataPath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1_GRD")
     dataPath = workpath / "data" / "S1_GRD"
+    if not os.path.exists(dataPath): os.makedirs(dataPath)
     # for key in products.keys():
     for filename in TO_SAVE["results"]['products_list']:
         # filename = products[key]['title']
@@ -164,6 +165,7 @@ if cfg.download_one:
         if os.path.exists(str(dataPath / f"{filename}.zip")):
             print(filename + " existed!")
         else:
+            
             sentinelsat_cmd_download(uuid, filename, dataPath)
             # api.download(id=uuid, directory_path=dataPath, checksum=True)
 
