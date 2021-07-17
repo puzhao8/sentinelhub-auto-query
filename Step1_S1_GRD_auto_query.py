@@ -54,8 +54,8 @@ if __name__ == "__main__":
         "start_date": start_date,
         "end_date": end_date,
 
-        "platformname": "Sentinel-2",
-        "producttype": 'S2MSI1C',
+        "platformname": "Sentinel-1", # Sentinel-2
+        "producttype": 'GRD', # S2MSI1C
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
