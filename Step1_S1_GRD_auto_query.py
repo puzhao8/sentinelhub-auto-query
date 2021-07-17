@@ -115,7 +115,6 @@ if __name__ == "__main__":
     # print(products_df.index)
     # pprint(products_df[['sensoroperationalmode', 'orbitdirection', 'relativeorbitnumber']])
 
-
     products_dict = products_df.transpose().to_dict()
     example_dict = products_dict[products_df.index.tolist()[0]]
     property_list = [key for key in example_dict.keys() if is_jsonable(example_dict[key])]
