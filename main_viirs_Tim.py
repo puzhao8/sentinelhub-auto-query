@@ -179,7 +179,8 @@ def crs_cloud_optimization(url):
 
     print(output_url)
 
-    warp = gdal.Warp(output_url, input_raster, dstSRS='EPSG:4326', dstNodata=0)
+    gdal.WarpOptions(dstSRS='EPSG:4326')
+    warp = gdal.Warp(output_url, input_raster, dstNodata=0)
     warp.GetRasterBand(1).SetNoDataValue(0)
     warp = None
 
@@ -199,7 +200,8 @@ if __name__ == "__main__":
     lance_date = lance_date.days
     print(lance_date)
 
-    dataPath = Path('data/VIIRS')
+    workspace = Path(os.getcwd())
+    dataPath = workspace / 'data' / 'VIIRS'
 
     command = "wget -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
         f"\"https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData/5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v03.001.h5\" \
@@ -213,16 +215,28 @@ if __name__ == "__main__":
     if os.path.exists(dataPath / "COG"): 
         shutil.rmtree(dataPath / 'COG')
     
-    inDir = dataPath / "5000/VNP09GA_NRT/2021"
-    for date in os.listdir(inDir):
+    inDir = dataPath / "5000"/ "VNP09GA_NRT" / "2021"
+    print(inDir)
+    for date in os.listdir(str(inDir)):
         outDir = dataPath / 'COG' / date
         print(f"outDir: {outDir}")
         convert_h5_to_cog(inDir=inDir / date, outDir=outDir, BANDS=["M3", "M4", "M5", "M7", "M10", "M11", "QF2"])
-
+        
     # upload to Gcloud
     url_list = glob(str(dataPath / "COG" / "*" / "*.tif"))
     for url in url_list:
-        crs_cloud_optimization(url)
+        # crs_cloud_optimization(url)
+        filename = os.path.split(url)[-1][:-4].replace(".", "_")
+        rprjDir = Path(os.path.split(url)[0]) / "reprojected"
+        if not os.path.exists(rprjDir): os.makedirs(rprjDir)
+
+        dst_url = rprjDir / f"{filename}.tif"
+        os.system(f"gdal_translate {url} {dst_url} \
+            -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW\
+            -a_srs EPSG:4326")
+
+
+        
 
     # gs_dir = "gs://wildfire-nrt/VIIRS"
     # os.system(f"gsutil -m cp -r COG/VNP09GA/COG/* {gs_dir}")
