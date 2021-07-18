@@ -6,9 +6,11 @@
 import datetime
 import datetime as dt
 from glob import glob
+import numbers
 from pathlib import Path
 
 from ee import data
+from numpy.char import startswith
 
 import h5py
 import numpy as np
@@ -174,7 +176,7 @@ def crs_cloud_optimization(url):
     input_dir = Path(os.path.split(url)[0])
     output_dir = input_dir / "reprojected" 
     if not os.path.exists(output_dir): os.makedirs(output_dir)
-    
+
     output_url = output_dir / f"{raster_name}.tif" 
 
     print(output_url)
@@ -203,27 +205,34 @@ if __name__ == "__main__":
     workspace = Path(os.getcwd())
     dataPath = workspace / 'data' / 'VIIRS'
 
-    command = "wget -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
-        f"\"https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData/5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v03.001.h5\" \
-            --header \"Authorization: Bearer emhhb3l1dGltOmVtaGhiM2wxZEdsdFFHZHRZV2xzTG1OdmJRPT06MTYyNjQ0MTQyMTphMzhkYTcwMzc5NTg1M2NhY2QzYjY2NTU0ZWFkNzFjMGEwMTljMmJj\" \
-            -P {dataPath}"
+    for vv in ['03', '04']:
+        url_part = f"5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v{vv}.001.h5"
+        command = "wget -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
+            f"\"https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData/\
+                {url_part}\" \
+                --header \"Authorization: Bearer emhhb3l1dGltOmVtaGhiM2wxZEdsdFFHZHRZV2xzTG1OdmJRPT06MTYyNjQ0MTQyMTphMzhkYTcwMzc5NTg1M2NhY2QzYjY2NTU0ZWFkNzFjMGEwMTljMmJj\" \
+                -P {dataPath}"
 
-    # os.system(command)
+        save_url = dataPath / url_part
+        if not os.path.exists(save_url):
+            os.system(command)
 
     # CRS optimization and cloud optimization
     import shutil
     if os.path.exists(dataPath / "COG"): 
         shutil.rmtree(dataPath / 'COG')
     
-    inDir = dataPath / "5000"/ "VNP09GA_NRT" / "2021"
+    inDir = dataPath / "5000" / "VNP09GA_NRT" / "2021"
     print(inDir)
-    for date in os.listdir(str(inDir)):
-        outDir = dataPath / 'COG' / date
+
+    julianDay_list = [folder for folder in os.listdir(str(inDir)) if folder != ".DS_Store"]
+    for date in julianDay_list:
+        outDir = dataPath / 'COG'
         print(f"outDir: {outDir}")
         convert_h5_to_cog(inDir=inDir / date, outDir=outDir, BANDS=["M3", "M4", "M5", "M7", "M10", "M11", "QF2"])
         
     # upload to Gcloud
-    url_list = glob(str(dataPath / "COG" / "*" / "*.tif"))
+    url_list = glob(str(dataPath / "COG" / "*.tif"))
     for url in url_list:
         # crs_cloud_optimization(url)
         filename = os.path.split(url)[-1][:-4].replace(".", "_")
@@ -231,9 +240,13 @@ if __name__ == "__main__":
         if not os.path.exists(rprjDir): os.makedirs(rprjDir)
 
         dst_url = rprjDir / f"{filename}.tif"
-        os.system(f"gdal_translate {url} {dst_url} \
-            -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW\
-            -a_srs EPSG:4326")
+        tmp_url = rprjDir / f"{filename}_tmp.tif"
+        os.system(f"gdalwarp {url} {tmp_url} -t_srs EPSG:4326 -dstnodata 0")
+        os.system(f"gdal_translate {tmp_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
+        os.remove(tmp_url)
+        
+        
+ 
 
 
         
