@@ -163,7 +163,7 @@ def check_status_and_set_property(task_dict, json_url):
     query_info = load_json(json_url)
 
     """ check upload status """
-    print("=============> check uplpad status <===============")
+    print("=============> check upload status <===============")
     # upload_finish_flag = False
     # while(not upload_finish_flag):
     #     time.sleep(60) # delay 30s
