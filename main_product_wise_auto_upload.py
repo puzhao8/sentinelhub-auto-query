@@ -107,7 +107,7 @@ def set_image_property(asset_id, query_info):
 
 
 """ upload_cog_as_eeImgCol """
-def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_flag=True, eeUser="omegazhangpzh"):
+def upload_cog_into_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_flag=True, eeUser="omegazhangpzh"):
     cogPath = dataPath / "COG"
 
     # eeUser = "omegazhangpzh"
@@ -134,23 +134,6 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_fla
     """ To COG GeoTiff """
     if upload_flag:
 
-        for filename in fileList:
-            print()
-            print(filename)
-            print("---------------------------------------------------------")
-
-            src_url = dataPath / f"{filename}.tif"
-            dst_url = cogPath / f"{filename}.tif"
-            os.system(f"gdal_translate {src_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
-
-            # """ Upload COG into GCS """
-            os.system(f"gsutil -m cp -r {dst_url} {gs_dir}")
-            # os.rmdir(cogPath) # delete cog folder after uploading.
-
-        # """ Upload COG into GCS """
-        # os.system(f"gsutil -m cp -r {cogPath}/* {gs_dir}")
-        # # os.rmdir(cogPath) # delete cog folder after uploading.
-
         """ Upload to earth engine asset """
         task_dict = {}
         for filename in fileList:
@@ -168,64 +151,69 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_fla
             pprint(f"task id: {task_id}")
             print()
 
-
-        # """ get property json """
-        # json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
-        # latest_json = sorted(os.listdir(json_folder))[-1]
-        # json_url = json_folder / latest_json
-
-        query_info = load_json(json_url)
-
-        """ check upload status """
-        print("=============> check uplpad status <===============")
-        upload_finish_flag = False
-        while(not upload_finish_flag):
-            print("-------------------------------------------------------")
-            time.sleep(60) # delay 30s
-            
-            upload_finish_flag = True
-            for filename in task_dict.keys():
-
-                asset_id = task_dict[filename]['asset_id'] #f"users/omegazhangpzh/Sentinel1/{filename}"
-                task_id = task_dict[filename]['task_id']
-
-                check_upload_status = f"earthengine task info {task_id}"
-                response = subprocess.getstatusoutput(check_upload_status)[1]
-                state = response.split("\n")[1].split(": ")[-1]
-                # state = edict(json.loads(response))['state']
-
-                task_dict[filename].update({'state': state})
-
-                if state == "COMPLETED":
-                    os.system(f"earthengine acl set public {asset_id}")
-
-                    # """ Set Properties """
-                    set_image_property(asset_id, query_info)
-                else:
-                    upload_finish_flag = False
-
-                # check_asset_permission(asset_id)
-                print(f"\n{filename}: {state}")
-
-            print()
-            # pprint(task_dict)
+        return task_dict
 
 
-        """ set image property """
-        # eeUser = "omegazhangpzh"
-        # gs_dir = "gs://wildfire-nrt/Sentinel1"
+def check_status_and_set_property(task_dict, json_url):
+    # """ get property json """
+    # json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
+    # latest_json = sorted(os.listdir(json_folder))[-1]
+    # json_url = json_folder / latest_json
 
-        time.sleep(10) # wait?
-        imgCol_name = os.path.split(gs_dir)[-1]
-        response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
-        asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
+    query_info = load_json(json_url)
 
-        for filename in task_dict.keys():
-            asset_id = task_dict[filename]["asset_id"]
-            if asset_id in asset_list:
-                set_image_property(asset_id, query_info)
-            else:
-                print(f"{asset_id} [Not Ready in GEE!]")
+    """ check upload status """
+    print("=============> check uplpad status <===============")
+    # upload_finish_flag = False
+    # while(not upload_finish_flag):
+    #     time.sleep(60) # delay 30s
+        
+    upload_finish_flag = True
+    for filename in task_dict.keys():
+
+        asset_id = task_dict[filename]['asset_id'] #f"users/omegazhangpzh/Sentinel1/{filename}"
+        task_id = task_dict[filename]['task_id']
+
+        check_upload_status = f"earthengine task info {task_id}"
+        response = subprocess.getstatusoutput(check_upload_status)[1]
+        state = response.split("\n")[1].split(": ")[-1]
+        # state = edict(json.loads(response))['state']
+
+        task_dict[filename].update({'state': state})
+
+        if state == "COMPLETED":
+            os.system(f"earthengine acl set public {asset_id}")
+
+            # """ Set Properties """
+            set_image_property(asset_id, query_info)
+            # task_dict.pop(filename)
+        else:
+            upload_finish_flag = False
+
+        # check_asset_permission(asset_id)
+        print(f"\n{filename}: {state}")
+
+    print("-----------------------------------------------------------------------\n")
+    # pprint(task_dict)
+
+
+    """ set image property """
+    # eeUser = "omegazhangpzh"
+    # gs_dir = "gs://wildfire-nrt/Sentinel1"
+
+    time.sleep(10) # wait?
+    imgCol_name = os.path.split(gs_dir)[-1]
+    response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
+    asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
+
+    for filename in task_dict.keys():
+        asset_id = task_dict[filename]["asset_id"]
+        if asset_id in asset_list:
+            set_image_property(asset_id, query_info)
+        else:
+            print(f"{asset_id} [Not Ready in GEE!]")
+
+    return upload_finish_flag
 
 
 
@@ -238,7 +226,10 @@ if __name__ == "__main__":
 
     folder = "S1_GRD"
     input_folder = Path("G:/PyProjects/sentinelhub-auto-query/data") / folder
-    output_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs") / folder
+    output_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs") / folder 
+    cog_folder = output_folder / "COG"
+    if os.path.exists(cog_folder): os.makedirs(cog_folder)
+
     gs_dir = "gs://wildfire-nrt/Sentinel1"
 
     """ get property json """
@@ -254,7 +245,9 @@ if __name__ == "__main__":
     fileList = query_info['results']['products_list']
     pprint(fileList)
 
+
     # product wise processing and uploading, you need to wait for all data being downloaded.
+    TASK_DICT = {}
     while (len(fileList) > 0):
         for filename in fileList[1:]:
             print("\n\n\n")    
@@ -265,14 +258,28 @@ if __name__ == "__main__":
             if os.path.exists(input_url):
 
                 output_url = output_folder / f"{filename}.tif"
+                
                 S1_GRD_Preprocessing(graphFile, input_url, output_url)
 
-                upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=[filename], upload_flag=True, eeUser=eeUser)
+                # convert into cloud-optimized geotiff
+                cog_url = cog_folder / f"{filename}.tif"
+                os.system(f"gdal_translate {output_url} {cog_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
+
+                # """ Upload COG into GCS """
+                os.system(f"gsutil -m cp -r {cog_url} {gs_dir}")
+
+                task_dict = upload_cog_into_eeImgCol(output_folder, gs_dir, json_url, fileList=[filename], upload_flag=True, eeUser=eeUser)
+                TASK_DICT.update(task_dict)
 
                 fileList.remove(filename) # remove item from list after finishing uploading
+
+    
+            upload_finish_flag = check_status_and_set_property(TASK_DICT, json_url)
 
     # batch_S1_GRD_processing(input_folder, output_folder, fileList)
     # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=None, upload_flag=True, eeUser=eeUser)
 
 
-
+    while(not upload_finish_flag):
+        time.sleep(10)
+        upload_finish_flag = check_status_and_set_property(TASK_DICT, json_url)

@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
-    start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
+    start_date = (datetime.today() + timedelta(-2)).strftime("%Y-%m-%d")
     end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
     print("now: ", now)
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
-        "download_flag": True,
+        "download_flag": False,
         "download_one": True, # download one by one
         "download_all": True, # download all once
 
