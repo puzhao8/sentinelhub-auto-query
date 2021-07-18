@@ -4,7 +4,7 @@
     <operator>Read</operator>
     <sources/>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>G:\PyProjects\sentinelhub-auto-query\data\S1\S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B.zip</file>
+      <file>G:\PyProjects\sentinelhub-auto-query\data\S1_GRD\S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B.zip</file>
     </parameters>
   </node>
   <node id="Apply-Orbit-File">
