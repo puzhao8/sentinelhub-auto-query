@@ -187,6 +187,7 @@ def check_status_and_set_property(task_dict, json_url):
             # """ Set Properties """
             set_image_property(asset_id, query_info)
             # task_dict.pop(filename)
+
         else:
             upload_finish_flag = False
 
@@ -198,20 +199,20 @@ def check_status_and_set_property(task_dict, json_url):
 
 
     """ set image property """
-    # eeUser = "omegazhangpzh"
-    # gs_dir = "gs://wildfire-nrt/Sentinel1"
+    # # eeUser = "omegazhangpzh"
+    # # gs_dir = "gs://wildfire-nrt/Sentinel1"
 
-    time.sleep(10) # wait?
-    imgCol_name = os.path.split(gs_dir)[-1]
-    response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
-    asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
+    # time.sleep(10) # wait?
+    # imgCol_name = os.path.split(gs_dir)[-1]
+    # response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
+    # asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
 
-    for filename in task_dict.keys():
-        asset_id = task_dict[filename]["asset_id"]
-        if asset_id in asset_list:
-            set_image_property(asset_id, query_info)
-        else:
-            print(f"{asset_id} [Not Ready in GEE!]")
+    # for filename in task_dict.keys():
+    #     asset_id = task_dict[filename]["asset_id"]
+    #     if asset_id in asset_list:
+    #         set_image_property(asset_id, query_info)
+    #     else:
+    #         print(f"{asset_id} [Not Ready in GEE!]")
 
     return upload_finish_flag
 
@@ -249,7 +250,8 @@ if __name__ == "__main__":
 
     # product wise processing and uploading, you need to wait for all data being downloaded.
     TASK_DICT = {}
-    while (len(fileList) > 0):
+    fileListCopy = fileList.copy()
+    while (len(fileListCopy) > 0):
         for filename in fileList[3:]:
             print("\n\n\n")    
             print(filename)
@@ -271,15 +273,27 @@ if __name__ == "__main__":
                 task_dict = upload_cog_into_eeImgCol(output_folder, gs_dir, json_url, fileList=[filename], upload_flag=True, eeUser=eeUser)
                 TASK_DICT.update(task_dict)
 
-                fileList.remove(filename) # remove item from list after finishing uploading
+                fileListCopy.remove(filename) # remove item from list after finishing uploading
 
-    
+            # pprint(TASK_DICT)
             upload_finish_flag = check_status_and_set_property(TASK_DICT, json_url)
 
     # batch_S1_GRD_processing(input_folder, output_folder, fileList)
     # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=None, upload_flag=True, eeUser=eeUser)
 
+    TASK_DICT_COPY = TASK_DICT.copy()
+    while(len(TASK_DICT_COPY) > 0):
 
-    while(not upload_finish_flag):
-        time.sleep(10)
-        upload_finish_flag = check_status_and_set_property(TASK_DICT, json_url)
+        time.sleep(10) # wait?
+        imgCol_name = os.path.split(gs_dir)[-1]
+        response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
+        asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
+
+        for filename in TASK_DICT.keys():
+            asset_id = task_dict[filename]["asset_id"]
+            if asset_id in asset_list:
+                set_image_property(asset_id, query_info)
+
+                TASK_DICT_COPY.pop(filename)
+            else:
+                print(f"{asset_id} [Not Ready in GEE!]")

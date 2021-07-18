@@ -9,8 +9,8 @@ from glob import glob
 import numbers
 from pathlib import Path
 
-from ee import data
-from numpy.char import startswith
+# from ee import data
+# from numpy.char import startswith
 
 import h5py
 import numpy as np
@@ -205,15 +205,16 @@ if __name__ == "__main__":
     workspace = Path(os.getcwd())
     dataPath = workspace / 'data' / 'VIIRS'
 
-    for vv in ['03', '04']:
+    for vv in ['04']:
         url_part = f"5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v{vv}.001.h5"
-        command = "wget -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
+        command = "c:/wget/wget.exe -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
             f"\"https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData/\
-                {url_part}\" \
+                5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v{vv}.001.h5\" \
                 --header \"Authorization: Bearer emhhb3l1dGltOmVtaGhiM2wxZEdsdFFHZHRZV2xzTG1OdmJRPT06MTYyNjQ0MTQyMTphMzhkYTcwMzc5NTg1M2NhY2QzYjY2NTU0ZWFkNzFjMGEwMTljMmJj\" \
                 -P {dataPath}"
 
-        save_url = dataPath / url_part
+        save_url = f"{dataPath}/{url_part}"
+        print(save_url)
         if not os.path.exists(save_url):
             os.system(command)
 
