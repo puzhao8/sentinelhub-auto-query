@@ -3,3 +3,4 @@ outputs/*
 outputs
 data/*
 .DS_Store/*
+nasa-viirs/*

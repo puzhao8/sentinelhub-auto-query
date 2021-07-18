@@ -20,9 +20,9 @@ GraphProcessor = jpy.get_type('org.esa.snap.core.gpf.graph.GraphProcessor')
 PrintPM = jpy.get_type('com.bc.ceres.core.PrintWriterProgressMonitor')
 
 """ S1_GRD_Preprocessing """
-def S1_GRD_Preprocessing(graphFile, input_url, output_url):
+def S1_GRD_Preprocessing(graph, input_url, output_url):
     ### Load Graph
-    graph = GraphIO.read(graphFile)
+    # graph = GraphIO.read(graphFile)
 
     input_url = str(input_url)
     output_url = str(output_url)
@@ -58,7 +58,7 @@ def batch_S1_GRD_processing(input_folder, output_folder, fileList):
         output_url = output_folder / (filename.split(".")[0] + ".tif")
 
         if not os.path.exists(str(output_url)):
-            S1_GRD_Preprocessing(graphFile, input_url, output_url)
+            S1_GRD_Preprocessing(graph, input_url, output_url)
     
 
 
@@ -223,12 +223,13 @@ if __name__ == "__main__":
 
     ### update input and output url
     graphFile = FileReader("G:\PyProjects\sentinelhub-auto-query\graphs\S1_GRD_preprocessing_GEE.xml")
+    graph = GraphIO.read(graphFile)
 
     folder = "S1_GRD"
     input_folder = Path("G:/PyProjects/sentinelhub-auto-query/data") / folder
     output_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs") / folder 
     cog_folder = output_folder / "COG"
-    if os.path.exists(cog_folder): os.makedirs(cog_folder)
+    if not os.path.exists(cog_folder): os.makedirs(cog_folder)
 
     gs_dir = "gs://wildfire-nrt/Sentinel1"
 
@@ -249,7 +250,7 @@ if __name__ == "__main__":
     # product wise processing and uploading, you need to wait for all data being downloaded.
     TASK_DICT = {}
     while (len(fileList) > 0):
-        for filename in fileList[1:]:
+        for filename in fileList[3:]:
             print("\n\n\n")    
             print(filename)
             print("-------------------------------------------------------\n")
@@ -258,8 +259,7 @@ if __name__ == "__main__":
             if os.path.exists(input_url):
 
                 output_url = output_folder / f"{filename}.tif"
-                
-                S1_GRD_Preprocessing(graphFile, input_url, output_url)
+                S1_GRD_Preprocessing(graph, input_url, output_url)
 
                 # convert into cloud-optimized geotiff
                 cog_url = cog_folder / f"{filename}.tif"
