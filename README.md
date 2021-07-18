@@ -1,6 +1,6 @@
 "# sentinelhub-auto-query" 
 
-
+# export env
 conda env export -f env.yml
 
 # config snappy (support python 2.7 and python 3.6)

@@ -143,9 +143,13 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_fla
             dst_url = cogPath / f"{filename}.tif"
             os.system(f"gdal_translate {src_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
 
-        """ Upload COG into GCS """
-        os.system(f"gsutil -m cp -r {cogPath}/* {gs_dir}")
-        os.rmdir(cogPath) # delete cog folder after uploading.
+            # """ Upload COG into GCS """
+            os.system(f"gsutil -m cp -r {dst_url} {gs_dir}")
+            # os.rmdir(cogPath) # delete cog folder after uploading.
+
+        # """ Upload COG into GCS """
+        # os.system(f"gsutil -m cp -r {cogPath}/* {gs_dir}")
+        # # os.rmdir(cogPath) # delete cog folder after uploading.
 
         """ Upload to earth engine asset """
         task_dict = {}
@@ -172,7 +176,7 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_fla
 
         query_info = load_json(json_url)
 
-        """ check uplpad status """
+        """ check upload status """
         print("=============> check uplpad status <===============")
         upload_finish_flag = False
         while(not upload_finish_flag):
@@ -201,7 +205,7 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_fla
                     upload_finish_flag = False
 
                 # check_asset_permission(asset_id)
-                print(f"\n{asset_id}: {state}")
+                print(f"\n{filename}: {state}")
 
             print()
             # pprint(task_dict)
@@ -217,7 +221,7 @@ def upload_cog_as_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_fla
         asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
 
         for filename in task_dict.keys():
-            asset_id = task_dict[filename][asset_id]
+            asset_id = task_dict[filename]["asset_id"]
             if asset_id in asset_list:
                 set_image_property(asset_id, query_info)
             else:
@@ -250,8 +254,25 @@ if __name__ == "__main__":
     fileList = query_info['results']['products_list']
     pprint(fileList)
 
+    # product wise processing and uploading, you need to wait for all data being downloaded.
+    while (len(fileList) > 0):
+        for filename in fileList[1:]:
+            print("\n\n\n")    
+            print(filename)
+            print("-------------------------------------------------------\n")
+            
+            input_url = input_folder / f"{filename}.zip"
+            if os.path.exists(input_url):
+
+                output_url = output_folder / f"{filename}.tif"
+                S1_GRD_Preprocessing(graphFile, input_url, output_url)
+
+                upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=[filename], upload_flag=True, eeUser=eeUser)
+
+                fileList.remove(filename) # remove item from list after finishing uploading
+
     # batch_S1_GRD_processing(input_folder, output_folder, fileList)
-    # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, upload_flag=True, eeUser=eeUser)
+    # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=None, upload_flag=True, eeUser=eeUser)
 
 
 

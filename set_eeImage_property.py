@@ -74,3 +74,5 @@ for product_id in fileList:
 
     # os.system(f"earthengine asset set -p {'gee'}={'false'} {collection_folder + product_id}")
     # # os.system(f"earthengine asset set -p {'transmitterReceiverPolarisation'}={'[VH, VV]'} {collection_folder + product_id}")
+
+
