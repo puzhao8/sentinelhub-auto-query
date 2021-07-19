@@ -1,6 +1,7 @@
 
 
 import os, datetime, subprocess, time, json
+import glob
 from pathlib import Path
 from httplib2 import Response
 from prettyprinter import pprint
@@ -228,7 +229,7 @@ if __name__ == "__main__":
     workPath = Path(os.getcwd()) # Project Folder
 
     ### update input and output url
-    graphFile = FileReader(workPath / "graphs" / "S1_GRD_preprocessing_GEE.xml")
+    graphFile = FileReader(str(workPath / "graphs" / "S1_GRD_preprocessing_GEE.xml"))
     graph = GraphIO.read(graphFile)
     
     input_folder = workPath / "data" / folder
@@ -236,12 +237,8 @@ if __name__ == "__main__":
     cog_folder = output_folder / "COG"
     if not os.path.exists(cog_folder): os.makedirs(cog_folder)
 
-    """ get property json """
+    """ get query info and property json """
     json_folder = workPath / "outputs" / "BC_ROIs"
-    latest_json = sorted(os.listdir(json_folder))[-1]
-    json_url = json_folder / latest_json
-
-    import glob
     json_url = sorted(glob.glob(str(json_folder / f"{folder}*.json")))[-1]
     print("\njson: " + os.path.split(json_url)[-1])
 
@@ -250,7 +247,18 @@ if __name__ == "__main__":
     pprint(fileList)
 
 
-    # product wise processing and uploading, you need to wait for all data being downloaded.
+    fileList = [
+        "S1A_IW_GRDH_1SDV_20210719T013906_20210719T013931_038840_04954C_9B58"
+        # "S1A_IW_GRDH_1SDV_20210719T013931_20210719T013956_038840_04954C_27C5"
+    ]
+
+
+    """ S1 GRD Preprocessing, 
+        Convert to COG, 
+        upload into GCS,
+        upload as eeImgCol of GEE """
+    # product wise processing and uploading, 
+    # you don't need to wait for all data being downloaded.
     TASK_DICT = {}
     fileListCopy = fileList.copy()
     while (len(fileListCopy) > 0):
