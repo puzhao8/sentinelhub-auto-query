@@ -33,8 +33,8 @@ def sentinelsat_cmd_download(uuid, filename, path, user="ahui0911", password="19
 
 if __name__ == "__main__":
 
-    platformname = "Sentinel-2" # Sentinel-2
-    producttype = 'S2MSI1C' # S2MSI1C, S2MSI2A
+    platformname = "Sentinel-1" # Sentinel-2
+    producttype = 'GRD' # S2MSI1C, S2MSI2A
 
     """////////////////////////////////// Start to Query ///////////////////////////////////////////////
     """
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
-    start_date = (datetime.today() + timedelta(-2)).strftime("%Y-%m-%d")
+    start_date = (datetime.today() + timedelta(0)).strftime("%Y-%m-%d")
     end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
     print("now: ", now)
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
-        "download_flag": False,
+        "download_flag": True,
         "download_one": True, # download one by one
         "download_all": True, # download all once
 

@@ -221,21 +221,23 @@ def check_status_and_set_property(task_dict, json_url):
 if __name__ == "__main__":
 
     eeUser = "omegazhangpzh"
+    gs_dir = "gs://sar4wildfire/Sentinel1"
+    folder = "S1_GRD"
+
+
+    workspace = Path(os.getcwd()) # Project Folder
 
     ### update input and output url
-    graphFile = FileReader("G:\PyProjects\sentinelhub-auto-query\graphs\S1_GRD_preprocessing_GEE.xml")
+    graphFile = FileReader(workspace / "graphs" / "S1_GRD_preprocessing_GEE.xml")
     graph = GraphIO.read(graphFile)
-
-    folder = "S1_GRD"
-    input_folder = Path("G:/PyProjects/sentinelhub-auto-query/data") / folder
-    output_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs") / folder 
+    
+    input_folder = workspace / "data" / folder
+    output_folder = workspace / "outputs" / folder 
     cog_folder = output_folder / "COG"
     if not os.path.exists(cog_folder): os.makedirs(cog_folder)
 
-    gs_dir = "gs://wildfire-nrt/Sentinel1"
-
     """ get property json """
-    json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
+    json_folder = workspace / "outputs" / "BC_ROIs"
     latest_json = sorted(os.listdir(json_folder))[-1]
     json_url = json_folder / latest_json
 
@@ -252,23 +254,24 @@ if __name__ == "__main__":
     TASK_DICT = {}
     fileListCopy = fileList.copy()
     while (len(fileListCopy) > 0):
-        for filename in fileList[3:]:
+        for filename in fileList:
             print("\n\n\n")    
             print(filename)
             print("-------------------------------------------------------\n")
             
             input_url = input_folder / f"{filename}.zip"
             if os.path.exists(input_url):
-
                 output_url = output_folder / f"{filename}.tif"
-                S1_GRD_Preprocessing(graph, input_url, output_url)
+
+                if not os.path.exists(str(output_url)):
+                    S1_GRD_Preprocessing(graph, input_url, output_url)
 
                 # convert into cloud-optimized geotiff
                 cog_url = cog_folder / f"{filename}.tif"
                 os.system(f"gdal_translate {output_url} {cog_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
 
                 # """ Upload COG into GCS """
-                os.system(f"gsutil -m cp -r {cog_url} {gs_dir}")
+                os.system(f"gsutil -m cp -r {cog_url} {gs_dir}/")
 
                 task_dict = upload_cog_into_eeImgCol(output_folder, gs_dir, json_url, fileList=[filename], upload_flag=True, eeUser=eeUser)
                 TASK_DICT.update(task_dict)
@@ -278,22 +281,54 @@ if __name__ == "__main__":
             # pprint(TASK_DICT)
             upload_finish_flag = check_status_and_set_property(TASK_DICT, json_url)
 
-    # batch_S1_GRD_processing(input_folder, output_folder, fileList)
-    # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=None, upload_flag=True, eeUser=eeUser)
 
-    TASK_DICT_COPY = TASK_DICT.copy()
-    while(len(TASK_DICT_COPY) > 0):
-
-        time.sleep(10) # wait?
-        imgCol_name = os.path.split(gs_dir)[-1]
+    """ Set Image Property """
+    fileListCopy = fileList.copy()
+    imgCol_name = os.path.split(gs_dir)[-1]
+    while(len(fileListCopy) > 0):
+        # time.sleep(10) # wait?
         response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
         asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
 
-        for filename in TASK_DICT.keys():
-            asset_id = task_dict[filename]["asset_id"]
+        for filename in fileList:
+            asset_id = f"users/{eeUser}/{imgCol_name}/" + filename
+
             if asset_id in asset_list:
                 set_image_property(asset_id, query_info)
-
-                TASK_DICT_COPY.pop(filename)
+                fileListCopy.remove(filename)
             else:
                 print(f"{asset_id} [Not Ready in GEE!]")
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # batch_S1_GRD_processing(input_folder, output_folder, fileList)
+    # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, fileList=None, upload_flag=True, eeUser=eeUser)
+
+    # TASK_DICT_COPY = TASK_DICT.copy()
+    # while(len(TASK_DICT_COPY) > 0):
+
+    #     time.sleep(10) # wait?
+    #     imgCol_name = os.path.split(gs_dir)[-1]
+    #     response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
+    #     asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
+
+    #     for filename in TASK_DICT.keys():
+    #         asset_id = task_dict[filename]["asset_id"]
+    #         if asset_id in asset_list:
+    #             set_image_property(asset_id, query_info)
+
+    #             TASK_DICT_COPY.pop(filename)
+    #         else:
+    #             print(f"{asset_id} [Not Ready in GEE!]")

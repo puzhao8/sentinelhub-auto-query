@@ -250,7 +250,7 @@ if __name__ == "__main__":
     fileList = query_info['results']['products_list']
     pprint(fileList)
 
-    # batch_S1_GRD_processing(input_folder, output_folder, fileList)
+    batch_S1_GRD_processing(input_folder, output_folder, fileList)
     # upload_cog_as_eeImgCol(output_folder, gs_dir, json_url, upload_flag=True, eeUser=eeUser)
 
 

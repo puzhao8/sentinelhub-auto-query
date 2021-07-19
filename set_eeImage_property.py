@@ -1,6 +1,5 @@
 
-from itertools import product
-import os
+import os, subprocess
 import json
 from pathlib import Path
 from easydict import EasyDict as edict
@@ -21,58 +20,45 @@ def load_json(url) -> edict:
 collection_folder = "users/omegazhangpzh/Sentinel1/"
 
 fileList = [
-    # "S1B_IW_GRDH_1SDV_20210716T020155_20210716T020220_027813_0351A3_E556",
-    "S1B_IW_GRDH_1SDV_20210716T020310_20210716T020325_027813_0351A3_2D71",
-    "S1B_IW_GRDH_1SDV_20210716T135416_20210716T135428_027820_0351DA_8C0F"
+    "S1A_IW_GRDH_1SDV_20210719T013812_20210719T013841_038840_04954C_43AA",
+    "S1A_IW_GRDH_1SDV_20210719T013841_20210719T013906_038840_04954C_ED6C",
+    "S1A_IW_GRDH_1SDV_20210719T013906_20210719T013931_038840_04954C_9B58",
+    "S1A_IW_GRDH_1SDV_20210719T013931_20210719T013956_038840_04954C_27C5",
+    "S1A_IW_GRDH_1SDV_20210719T013956_20210719T014021_038840_04954C_6EB5",
+    "S1A_IW_GRDH_1SDV_20210719T014021_20210719T014043_038840_04954C_EF05"
 ]
 
+
+
+eeUser = "omegazhangpzh"
+gs_dir = "gs://sar4wildfire/Sentinel1"
+folder = "S1_GRD"
+
+import glob
 json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
-latest_json = sorted(os.listdir(json_folder))[-1]
-json_url = json_folder / latest_json
-print(json_url)
+json_url = sorted(glob.glob(str(json_folder / f"{folder}*.json")))[-1]
+print("\njson: " + os.path.split(json_url)[-1])
+
 query_info = load_json(json_url)
 
-from main_S1_GRD_process_and_upload import set_image_property
-for product_id in fileList:
-    # product_id = "S1B_IW_GRDH_1SDV_20210714T141147_20210714T141212_027791_035101_0B6B"
-    asset_id = "users/omegazhangpzh/Sentinel1_test/" + product_id
-    set_image_property(asset_id, query_info)
+from main_product_wise_auto_upload import set_image_property
 
-    # product_info = query_info['products'][product_id]
+fileListCopy = fileList.copy()
 
-    # time_start = datetime.strptime(product_id.split("_")[4], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
-    # time_end = datetime.strptime(product_id.split("_")[5], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
-    # footprint = product_info['footprint']
+while(len(fileListCopy) > 0):
+    # time.sleep(10) # wait?
+    imgCol_name = os.path.split(gs_dir)[-1]
+    response = subprocess.getstatusoutput(f"earthengine ls users/{eeUser}/{imgCol_name}")
+    asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
 
-    # print()
-    # pprint(product_id)
-    # print("-----------------------------------------------------------------")
-    # print(time_start)
-    # # print(footprint)
+    for filename in fileList:
+        asset_id = "users/omegazhangpzh/Sentinel1/" + filename
 
-    # os.system(f"earthengine asset set --time_start {time_start} {collection_folder + product_id}")
-    # os.system(f"earthengine asset set --time_end {time_end} {collection_folder + product_id}")
+        if asset_id in asset_list:
+            set_image_property(asset_id, query_info)
+            fileListCopy.remove(filename)
+        else:
+            print(f"{asset_id} [Not Ready in GEE!]")
 
-    # property_dict = {
-    #     'relativeorbitnumber': 'relativeOrbitNumber_start',
-    #     'orbitdirection': 'orbitProperties_pass',
-    # }
-
-    # for property in product_info.keys():
-    #     value = product_info[property]
-
-    #     if property in property_dict.keys(): property = property_dict[property]
-
-    #     # if "footprint" == property: 
-    #     #     # property = "footprint"
-    #     #     string_list = value.split("(((")[1][:-3].replace(" ", ",").replace(",,", ",").split(",")
-    #     #     value = [eval(x) for x in string_list]
-    #     #     # value = ee.Geometry.MultiPolygon([-118.227242, 50.409222, -117.754776, 51.904125, -121.424622, 52.301323, -121.779961, 50.804768, -118.227242, 50.409222])
-
-    #     print(property, value)    
-    #     os.system(f"earthengine asset set -p {property}={value} {collection_folder + product_id}")
-
-    # os.system(f"earthengine asset set -p {'gee'}={'false'} {collection_folder + product_id}")
-    # # os.system(f"earthengine asset set -p {'transmitterReceiverPolarisation'}={'[VH, VV]'} {collection_folder + product_id}")
 
 
