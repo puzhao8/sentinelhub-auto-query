@@ -33,8 +33,11 @@ def sentinelsat_cmd_download(uuid, filename, path, user="ahui0911", password="19
 
 if __name__ == "__main__":
 
+    now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     platformname = "Sentinel-2" # Sentinel-2
     producttype = 'S2MSI1C' # S2MSI1C, S2MSI2A
+    download_flag = False
+    
 
     """////////////////////////////////// Start to Query ///////////////////////////////////////////////
     """
@@ -44,7 +47,6 @@ if __name__ == "__main__":
     user, password = "ahui0911", "19940911"
     api = SentinelAPI(user, password, 'https://scihub.copernicus.eu/dhus')
 
-    now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
     start_date = (datetime.today() + timedelta(-2)).strftime("%Y-%m-%d")
     end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
@@ -65,7 +67,7 @@ if __name__ == "__main__":
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
-        "download_flag": False,
+        "download_flag": download_flag,
         "download_one": True, # download one by one
         "download_all": True, # download all once
 

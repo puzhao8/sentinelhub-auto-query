@@ -33,20 +33,25 @@ def sentinelsat_cmd_download(uuid, filename, path, user="ahui0911", password="19
 
 if __name__ == "__main__":
 
+    now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     platformname = "Sentinel-1" # Sentinel-2
     producttype = 'GRD' # S2MSI1C, S2MSI2A
+    download_flag = True
+
+    
+    datafolder = Path("D:/Sentinel_Hub")
+    workpath = Path(os.getcwd())
+    
 
     """////////////////////////////////// Start to Query ///////////////////////////////////////////////
     """
-    workpath = Path(os.getcwd())
 
     # api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
     user, password = "ahui0911", "19940911"
     api = SentinelAPI(user, password, 'https://scihub.copernicus.eu/dhus')
 
-    now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
-    start_date = (datetime.today() + timedelta(0)).strftime("%Y-%m-%d")
+    start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
     end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
     print("now: ", now)
 
@@ -65,7 +70,7 @@ if __name__ == "__main__":
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
-        "download_flag": True,
+        "download_flag": download_flag,
         "download_one": True, # download one by one
         "download_all": True, # download all once
 
@@ -78,7 +83,7 @@ if __name__ == "__main__":
     }
     SAT = Sat_Abb_Dict[cfg.platformname]
 
-    savePath = workpath / "data" / f"{SAT}_{cfg.producttype}"
+    savePath = datafolder / "data" / f"{SAT}_{cfg.producttype}"
     if not os.path.exists(savePath): os.makedirs(savePath)
 
     cfg.download_all = False if cfg.download_one  else True
@@ -142,6 +147,10 @@ if __name__ == "__main__":
     orbit_dict = {'ASCENDING': 'ASC', 'DESCENDING': 'DSC'}
     products_to_save = edict()
     checkImgCol = ee.ImageCollection(f"{cfg.check_eeImgCol}")
+
+    if SAT == "S1": checkImgCol = checkImgCol.merge(ee.ImageCollection("users/omegazhangpzh/Sentinel1"))
+    if SAT == "S2": checkImgCol = checkImgCol.merge(ee.ImageCollection("users/omegazhangpzh/Sentinel2"))
+
     for product_id in products_dict.keys():
         
         title = products_dict[product_id]['title']
@@ -170,7 +179,7 @@ if __name__ == "__main__":
 
 
     # roi_name = os.path.split(cfg.roi_url)[-1].split(".")[0]
-    jsonPath = workpath / "outputs" / roi_name
+    jsonPath = datafolder / "outputs" / roi_name
     if not os.path.exists(str(jsonPath)):
         os.makedirs(jsonPath)
 

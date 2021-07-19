@@ -5,6 +5,7 @@
 # hHHvVV GRID: https://modis-land.gsfc.nasa.gov/MODLAND_grid.html
 import datetime
 import datetime as dt
+from genericpath import isfile
 from glob import glob
 import numbers
 from pathlib import Path
@@ -190,34 +191,27 @@ def crs_cloud_optimization(url):
     dst_url = input_dir / "COG" / raster_name
     os.system(f"gdal_translate {output_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
 
-if __name__ == "__main__":
-    # # 1km vs. 500m --> "M5", "M7", "M10" vs. "I1", "I2", "I3"
-    # # 500m: "M3",     "M4",  "I1",  "I2",   "I3",    "M11",  "QF2"
-    # # 1km:  "M3",     "M4",  "M5",  "M7",   "M10",    "M11",  "QF2"
-    # # "Blue", "Green", "Red", "NIR", "SWIR1", "SWIR2", "BitMask"
-    # BANDS = ["M3",     "M4",  "M5",  "M7",   "M10",    "M11",  "QF2"]
 
-    # Download from Lance
-    lance_date = datetime.date.today() - datetime.date(2021, 1, 1)
-    lance_date = lance_date.days
-    print(lance_date)
 
-    workspace = Path(os.getcwd())
-    dataPath = workspace / 'data' / 'VIIRS'
+def download_viirs_on(julian_day, hh_list=['10', '11'], vv_list =['03']):
+    for hh in hh_list:
+        for vv in vv_list:
+            print(f"\njulian_day: {julian_day}， h{hh}v{vv}")
+            print("-----------------------------------------------------------")
 
-    for vv in ['04']:
-        url_part = f"5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v{vv}.001.h5"
-        command = "c:/wget/wget.exe -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
-            f"\"https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData/\
-                5000/VNP09GA_NRT/2021/{lance_date}/VNP09GA_NRT.A2021{lance_date}.h10v{vv}.001.h5\" \
-                --header \"Authorization: Bearer emhhb3l1dGltOmVtaGhiM2wxZEdsdFFHZHRZV2xzTG1OdmJRPT06MTYyNjQ0MTQyMTphMzhkYTcwMzc5NTg1M2NhY2QzYjY2NTU0ZWFkNzFjMGEwMTljMmJj\" \
-                -P {dataPath}"
+            url_part = f"5000/VNP09GA_NRT/2021/{julian_day}/VNP09GA_NRT.A2021{julian_day}.h{hh}v{vv}.001.h5"
+            command = "c:/wget/wget.exe -e robots=off -m -np -R .html,.tmp -nH --cut-dirs=5 " + \
+                f"\"https://nrt4.modaps.eosdis.nasa.gov/api/v2/content/archives/allData/\"{url_part} \
+                    --header \"Authorization: Bearer emhhb3l1dGltOmVtaGhiM2wxZEdsdFFHZHRZV2xzTG1OdmJRPT06MTYyNjQ0MTQyMTphMzhkYTcwMzc5NTg1M2NhY2QzYjY2NTU0ZWFkNzFjMGEwMTljMmJj\" \
+                    -P {dataPath}"
 
-        save_url = f"{dataPath}/{url_part}"
-        print(save_url)
-        if not os.path.exists(save_url):
-            os.system(command)
+            print(command)
+            save_url = f"{dataPath}/{url_part}"
+            print(save_url)
+            if not os.path.exists(save_url):
+                os.system(command)
 
+def viirs_preprocessing_and_upload(dataPath):
     # CRS optimization and cloud optimization
     import shutil
     if os.path.exists(dataPath / "COG"): 
@@ -233,31 +227,88 @@ if __name__ == "__main__":
         convert_h5_to_cog(inDir=inDir / date, outDir=outDir, BANDS=["M3", "M4", "M5", "M7", "M10", "M11", "QF2"])
         
     # upload to Gcloud
-    url_list = glob(str(dataPath / "COG" / "*.tif"))
-    for url in url_list:
+    fileList = [file for file in os.listdir(dataPath / "COG") if file[-4:] == ".tif"]
+    dstList = []
+    for file in fileList:
         # crs_cloud_optimization(url)
-        filename = os.path.split(url)[-1][:-4].replace(".", "_")
-        rprjDir = Path(os.path.split(url)[0]) / "reprojected"
+        url = dataPath / "COG" / file
+        filename = file[:-4].replace(".", "_")
+        
+        rprjDir = Path(f"{os.path.split(url)[0]}_rprj")
         if not os.path.exists(rprjDir): os.makedirs(rprjDir)
 
         dst_url = rprjDir / f"{filename}.tif"
         tmp_url = rprjDir / f"{filename}_tmp.tif"
-        os.system(f"gdalwarp {url} {tmp_url} -t_srs EPSG:4326 -dstnodata 0")
+        os.system(f"gdalwarp {url} {tmp_url} -t_srs EPSG:4326 -r bilinear -tr -926.6254330555555 926.6254330555555 -dstnodata 0")
         os.system(f"gdal_translate {tmp_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
-        os.remove(tmp_url)
         
+        if isfile(tmp_url): os.remove(tmp_url)
         
- 
+        os.system(f"gsutil -m cp -r {dst_url} {gs_dir}/")
+        os.system(f"earthengine upload image --asset_id=users/omegazhangpzh/VIIRS_NRT/{filename} {gs_dir}/{filename}.tif")
+
+        dstList.append(filename)
+    return dstList
 
 
+from prettyprinter import pprint
+
+if __name__ == "__main__":
+    # # 1km vs. 500m --> "M5", "M7", "M10" vs. "I1", "I2", "I3"
+    # # 500m: "M3",     "M4",  "I1",  "I2",   "I3",    "M11",  "QF2"
+    # # 1km:  "M3",     "M4",  "M5",  "M7",   "M10",    "M11",  "QF2"
+    # # "Blue", "Green", "Red", "NIR", "SWIR1", "SWIR2", "BitMask"
+    # BANDS = ["M3",     "M4",  "M5",  "M7",   "M10",    "M11",  "QF2"]
+
+    
+    # workspace = Path(os.getcwd())
+    workspace = Path("D:/Sentinel_Hub")
+    dataPath = workspace / 'data' / 'VIIRS_NRT'
+    gs_dir = "gs://sar4wildfire/VIIRS_NRT_V1"
+
+    # # Download from Lance
+    # lance_date = datetime.date.today() - datetime.date(2021, 1, 1)
+    # julian_today = lance_date.days
+    # print(f"julian_today: {julian_today}")
+
+    # for julian_day in range(julian_today-1, julian_today+1):
+    #     download_viirs_on(julian_day, hh_list=['10', '11'], vv_list =['03'])
         
 
-    # gs_dir = "gs://wildfire-nrt/VIIRS"
-    # os.system(f"gsutil -m cp -r COG/VNP09GA/COG/* {gs_dir}")
+    fileList = viirs_preprocessing_and_upload(dataPath)
+    
+    fileList = [
+        "VNP09GA_NRT_A2021198_h10v03_001",
+        "VNP09GA_NRT_A2021198_h11v03_001",
+        "VNP09GA_NRT_A2021199_h10v03_001",
+        "VNP09GA_NRT_A2021199_h11v03_001"
+    ]
 
-    # # upload from Gcloud to GEE
-    # uploaddatalist = glob('COG/VNP09GA/COG/*.tif')
-    # for filename in uploaddatalist:
-    #     date = datetime.date(2021, 1, 1) + datetime.timedelta(int(os.path.split(filename)[1][-7:-4]))
-    #     os.system(f"earthengine upload image --asset_id=users/zhaoyutim/VNP09GA/{os.path.split(filename)[1][:-4]} {gs_dir+os.path.split(filename)[1]}")
-    #     os.system(f'earthengine asset set --time_start {str(date)} users/zhaoyutim/VNP09GA/{os.path.split(filename)[1][:-4]}')
+    """ set property """
+    import time, subprocess
+    from datetime import datetime, timedelta
+
+    fileListCopy = fileList.copy()
+    imgCol_name = os.path.split(gs_dir)[-1]
+    while(len(fileListCopy) > 0):
+        pprint(fileListCopy)
+        print("-------------------------------------------------------------------")
+    
+        response = subprocess.getstatusoutput(f"earthengine ls users/omegazhangpzh/VIIRS_NRT")
+        asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
+
+        for filename in fileList:
+            asset_id = f"users/omegazhangpzh/VIIRS_NRT/{filename}"  # VNP09GA_NRT_A2021198_h10v03_001
+            julian_day = eval(filename.split("_")[2][5:])
+            standard_date = datetime(2021, 1, 1) + timedelta(days=julian_day)
+            standard_date = standard_date.strftime("%Y-%m-%d")
+
+            if asset_id in asset_list:
+                # set_image_property(asset_id, query_info)
+                os.system(f'earthengine asset set --time_start {standard_date} {asset_id}')
+                fileListCopy.remove(filename)
+            else:
+                print(f"{asset_id} [Not Ready in GEE!]")
+
+
+        time.sleep(60) # wait?

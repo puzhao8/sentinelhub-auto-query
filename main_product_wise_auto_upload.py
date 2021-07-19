@@ -226,19 +226,20 @@ if __name__ == "__main__":
     folder = "S1_GRD"
 
 
+    datafolder = Path("D:/Sentinel_Hub")
     workPath = Path(os.getcwd()) # Project Folder
 
     ### update input and output url
     graphFile = FileReader(str(workPath / "graphs" / "S1_GRD_preprocessing_GEE.xml"))
     graph = GraphIO.read(graphFile)
     
-    input_folder = workPath / "data" / folder
-    output_folder = workPath / "outputs" / folder 
+    input_folder = datafolder / "data" / folder
+    output_folder = datafolder / "outputs" / folder 
     cog_folder = output_folder / "COG"
     if not os.path.exists(cog_folder): os.makedirs(cog_folder)
 
     """ get query info and property json """
-    json_folder = workPath / "outputs" / "BC_ROIs"
+    json_folder = datafolder / "outputs" / "BC_ROIs"
     json_url = sorted(glob.glob(str(json_folder / f"{folder}*.json")))[-1]
     print("\njson: " + os.path.split(json_url)[-1])
 
@@ -247,10 +248,10 @@ if __name__ == "__main__":
     pprint(fileList)
 
 
-    fileList = [
-        "S1A_IW_GRDH_1SDV_20210719T013906_20210719T013931_038840_04954C_9B58"
-        # "S1A_IW_GRDH_1SDV_20210719T013931_20210719T013956_038840_04954C_27C5"
-    ]
+    # fileList = [
+    #     "S1A_IW_GRDH_1SDV_20210719T013906_20210719T013931_038840_04954C_9B58"
+    #     # "S1A_IW_GRDH_1SDV_20210719T013931_20210719T013956_038840_04954C_27C5"
+    # ]
 
 
     """ S1 GRD Preprocessing, 
