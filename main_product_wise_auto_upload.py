@@ -225,19 +225,19 @@ if __name__ == "__main__":
     folder = "S1_GRD"
 
 
-    workspace = Path(os.getcwd()) # Project Folder
+    workPath = Path(os.getcwd()) # Project Folder
 
     ### update input and output url
-    graphFile = FileReader(workspace / "graphs" / "S1_GRD_preprocessing_GEE.xml")
+    graphFile = FileReader(workPath / "graphs" / "S1_GRD_preprocessing_GEE.xml")
     graph = GraphIO.read(graphFile)
     
-    input_folder = workspace / "data" / folder
-    output_folder = workspace / "outputs" / folder 
+    input_folder = workPath / "data" / folder
+    output_folder = workPath / "outputs" / folder 
     cog_folder = output_folder / "COG"
     if not os.path.exists(cog_folder): os.makedirs(cog_folder)
 
     """ get property json """
-    json_folder = workspace / "outputs" / "BC_ROIs"
+    json_folder = workPath / "outputs" / "BC_ROIs"
     latest_json = sorted(os.listdir(json_folder))[-1]
     json_url = json_folder / latest_json
 

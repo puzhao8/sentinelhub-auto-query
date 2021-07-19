@@ -56,8 +56,8 @@ if __name__ == "__main__":
         "query_by": "roi", # 'place' has problem
 
         "query_date": today,
-        "start_date": start_date,
-        "end_date": end_date,
+        "start_date": "2021-07-18", #start_date,
+        "end_date": "2021-07-19", #end_date,
 
         "platformname": platformname, # Sentinel-2
         "producttype": producttype, # S2MSI1C, S2MSI2A
