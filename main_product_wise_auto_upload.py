@@ -108,7 +108,7 @@ def set_image_property(asset_id, query_info):
 
 
 """ upload_cog_as_eeImgCol """
-def upload_cog_into_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_flag=True, eeUser="omegazhangpzh"):
+def upload_cog_into_eeImgCol(dataPath, gs_dir, fileList=None, upload_flag=True, eeUser="omegazhangpzh"):
     cogPath = dataPath / "COG"
 
     # eeUser = "omegazhangpzh"
@@ -155,13 +155,13 @@ def upload_cog_into_eeImgCol(dataPath, gs_dir, json_url, fileList=None, upload_f
         return task_dict
 
 
-def check_status_and_set_property(task_dict, json_url):
+def check_status_and_set_property(task_dict, query_info):
     # """ get property json """
     # json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
     # latest_json = sorted(os.listdir(json_folder))[-1]
     # json_url = json_folder / latest_json
 
-    query_info = load_json(json_url)
+    # query_info = load_json(json_url)
 
     """ check upload status """
     print("=============> check upload status <===============")
@@ -218,32 +218,30 @@ def check_status_and_set_property(task_dict, json_url):
     return upload_finish_flag
 
 
+def sentinel_preprocessing_and_upload(cfg, query_info):
+    # cfg.update(query_info.cfg) 
+    cfg = query_info.cfg
 
-if __name__ == "__main__":
+    gs_dir = cfg.gs_dir
+    eeUser = cfg.eeUser
+    cfg.datafolder = Path(cfg.datafolder)
 
-    eeUser = "omegazhangpzh"
-    gs_dir = "gs://sar4wildfire/Sentinel1"
-    folder = "S1_GRD"
-
-
-    datafolder = Path("D:/Sentinel_Hub")
-    workPath = Path(os.getcwd()) # Project Folder
-
+    # workPath = Path(os.getcwd()) # Project Folder
     ### update input and output url
-    graphFile = FileReader(str(workPath / "graphs" / "S1_GRD_preprocessing_GEE.xml"))
+    graphFile = FileReader(str(cfg.graph_url))
     graph = GraphIO.read(graphFile)
     
-    input_folder = datafolder / "data" / folder
-    output_folder = datafolder / "outputs" / folder 
+    input_folder = cfg.datafolder / "data" / cfg.sat_folder
+    output_folder = cfg.datafolder / "outputs" / cfg.sat_folder 
     cog_folder = output_folder / "COG"
     if not os.path.exists(cog_folder): os.makedirs(cog_folder)
 
     """ get query info and property json """
-    json_folder = datafolder / "outputs" / "BC_ROIs"
-    json_url = sorted(glob.glob(str(json_folder / f"{folder}*.json")))[-1]
-    print("\njson: " + os.path.split(json_url)[-1])
+    # json_folder = datafolder / "outputs" / "BC_ROIs"
+    # json_url = sorted(glob.glob(str(json_folder / f"{folder}*.json")))[-1]
+    # print("\njson: " + os.path.split(json_url)[-1])
 
-    query_info = load_json(json_url)
+    # query_info = load_json(json_url)
     fileList = query_info['results']['products_list']
     pprint(fileList)
 
@@ -263,13 +261,17 @@ if __name__ == "__main__":
     TASK_DICT = {}
     fileListCopy = fileList.copy()
     while (len(fileListCopy) > 0):
-        for filename in fileList:
-            print("\n\n\n")    
-            print(filename)
-            print("-------------------------------------------------------\n")
-            
+        time.sleep(10)
+        print("\n----------------------------- while -------------------------------")  
+
+        for filename in fileList:            
             input_url = input_folder / f"{filename}.zip"
             if os.path.exists(input_url):
+
+                print("\n\n\n")    
+                print(filename)
+                print("-------------------------------------------------------\n")
+
                 output_url = output_folder / f"{filename}.tif"
 
                 if not os.path.exists(str(output_url)):
@@ -282,16 +284,21 @@ if __name__ == "__main__":
                 # """ Upload COG into GCS """
                 os.system(f"gsutil -m cp -r {cog_url} {gs_dir}/")
 
-                task_dict = upload_cog_into_eeImgCol(output_folder, gs_dir, json_url, fileList=[filename], upload_flag=True, eeUser=eeUser)
+                task_dict = upload_cog_into_eeImgCol(output_folder, gs_dir, fileList=[filename], upload_flag=True, eeUser=eeUser)
                 TASK_DICT.update(task_dict)
 
                 fileListCopy.remove(filename) # remove item from list after finishing uploading
 
-            # pprint(TASK_DICT)
-            upload_finish_flag = check_status_and_set_property(TASK_DICT, json_url)
+                # pprint(TASK_DICT)
+                upload_finish_flag = check_status_and_set_property(TASK_DICT, query_info)
+            
+            else:
+                print(f"{filename} [not existed!]")
+
 
 
     """ Set Image Property """
+    fileList = TASK_DICT.keys()
     fileListCopy = fileList.copy()
     imgCol_name = os.path.split(gs_dir)[-1]
     while(len(fileListCopy) > 0):
@@ -307,6 +314,40 @@ if __name__ == "__main__":
                 fileListCopy.remove(filename)
             else:
                 print(f"{asset_id} [Not Ready in GEE!]")
+
+if __name__ == "__main__":
+
+    
+    cfg = edict({
+        # query parameters
+        "roi_url": "inputs/BC_ROIs.geojson",
+
+        "platformname": "Sentinel-1", # Sentinel-2
+        "producttype": 'GRD', # S2MSI1C, S2MSI2A
+
+        "start_date": None,
+        "end_date": None,
+
+        # download parameters
+        "download_flag": True,
+        "datafolder": "D:/Sentinel_Hub", # where to save data
+
+
+        # upload parameters
+        "eeUser": "omegazhangpzh",
+        "gs_dir": "gs://sar4wildfire/Sentinel1",
+        "graph_url": "G:\PyProjects\sentinelhub-auto-query\graphs\S1_GRD_preprocessing_GEE.xml"
+
+    
+    })
+
+    
+    from Step1_S1_GRD_auto_query import query_sentinel_data, download_sentinel_data
+
+    query_info = query_sentinel_data(cfg, save_json=False)
+    # download_sentinel_data(query_info)
+    sentinel_preprocessing_and_upload(cfg, query_info)
+    
 
     
     

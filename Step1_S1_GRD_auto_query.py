@@ -31,46 +31,36 @@ def sentinelsat_cmd_download(uuid, filename, path, user="ahui0911", password="19
     os.system(f"sentinelsat -u {user} -p {password}  --uuid {uuid} -d --path {path} \
         --footprints {geojson_url}")
 
-if __name__ == "__main__":
-
-    now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-    platformname = "Sentinel-1" # Sentinel-2
-    producttype = 'GRD' # S2MSI1C, S2MSI2A
-    download_flag = True
-
-    
-    datafolder = Path("D:/Sentinel_Hub")
+def query_sentinel_data(cfg, save_json=True):
     workpath = Path(os.getcwd())
-    
 
-    """////////////////////////////////// Start to Query ///////////////////////////////////////////////
-    """
 
     # api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
     user, password = "ahui0911", "19940911"
     api = SentinelAPI(user, password, 'https://scihub.copernicus.eu/dhus')
 
+    now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
-    start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
-    end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
+    if cfg.start_date is None: start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
+    if cfg.end_date is None: end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
     print("now: ", now)
 
-    cfg = edict({
-        "roi_url": "inputs/BC_ROIs.geojson",
+    cfg.update({
+        "roi_url": cfg.roi_url,
         'placename': "British Columbia",
         "query_by": "roi", # 'place' has problem
 
         "query_date": today,
-        "start_date": "2021-07-18", #start_date,
-        "end_date": "2021-07-19", #end_date,
+        "start_date": start_date,
+        "end_date": end_date,
 
-        "platformname": platformname, # Sentinel-2
-        "producttype": producttype, # S2MSI1C, S2MSI2A
+        "platformname": cfg.platformname, # Sentinel-2
+        "producttype": cfg.producttype, # S2MSI1C, S2MSI2A
 
         # 'relativeorbitnumber': 84,
         # "orbitdirection": "ASCENDING",
 
-        "download_flag": download_flag,
+        "download_flag": cfg.download_flag,
         "download_one": True, # download one by one
         "download_all": True, # download all once
 
@@ -83,9 +73,12 @@ if __name__ == "__main__":
     }
     SAT = Sat_Abb_Dict[cfg.platformname]
 
+    datafolder = Path(cfg.datafolder)
     savePath = datafolder / "data" / f"{SAT}_{cfg.producttype}"
     if not os.path.exists(savePath): os.makedirs(savePath)
 
+    cfg.update({"sat_folder": str(savePath)})
+    
     cfg.download_all = False if cfg.download_one  else True
     cfg.download_all = cfg.download_all and cfg.download_flag
     cfg.download_one = cfg.download_one and cfg.download_flag
@@ -145,10 +138,11 @@ if __name__ == "__main__":
 
     # select property for saving to json
     orbit_dict = {'ASCENDING': 'ASC', 'DESCENDING': 'DSC'}
-    products_to_save = edict()
+    products_QueryInfo = edict()
     checkImgCol = ee.ImageCollection(f"{cfg.check_eeImgCol}")
 
-    if SAT == "S1": checkImgCol = checkImgCol.merge(ee.ImageCollection("users/omegazhangpzh/Sentinel1"))
+    if SAT == "S1": 
+        checkImgCol = (ee.ImageCollection("users/omegazhangpzh/Sentinel1"))
     if SAT == "S2": checkImgCol = checkImgCol.merge(ee.ImageCollection("users/omegazhangpzh/Sentinel2"))
 
     for product_id in products_dict.keys():
@@ -159,23 +153,23 @@ if __name__ == "__main__":
         if not flag: # if this product is not available in GEE
             # print(title)
             # print(title, flag.getInfo())
-            products_to_save[title] = {key: products_dict[product_id][key] for key in property_list}
-            # products_to_save[title]['product_id'] = product_id
+            products_QueryInfo[title] = {key: products_dict[product_id][key] for key in property_list}
+            # products_QueryInfo[title]['product_id'] = product_id
 
             orbit_direction = products_dict[product_id]['orbitdirection']
             orbit_num = products_dict[product_id]['relativeorbitnumber']
 
-            products_to_save[title]['orbit_key'] = orbit_dict[orbit_direction] + "_" + str(orbit_num)
+            products_QueryInfo[title]['orbit_key'] = orbit_dict[orbit_direction] + "_" + str(orbit_num)
 
-    TO_SAVE = edict()
-    TO_SAVE["products"] = products_to_save
+    QueryInfo = edict()
+    QueryInfo["products"] = products_QueryInfo
 
-    TO_SAVE["results"] = edict()
-    TO_SAVE["results"]['total_number'] = len(products_to_save.keys())
-    TO_SAVE["results"]['products_list'] = sorted(list(products_to_save.keys()))
-    TO_SAVE["results"]['orbKey_list'] = list(set([products_to_save[product]['orbit_key'] for product in list(products_to_save.keys())]))
+    QueryInfo["results"] = edict()
+    QueryInfo["results"]['total_number'] = len(products_QueryInfo.keys())
+    QueryInfo["results"]['products_list'] = sorted(list(products_QueryInfo.keys()))
+    QueryInfo["results"]['orbKey_list'] = list(set([products_QueryInfo[product]['orbit_key'] for product in list(products_QueryInfo.keys())]))
 
-    TO_SAVE["cfg"] = cfg
+    QueryInfo["cfg"] = cfg
 
 
     # roi_name = os.path.split(cfg.roi_url)[-1].split(".")[0]
@@ -183,58 +177,87 @@ if __name__ == "__main__":
     if not os.path.exists(str(jsonPath)):
         os.makedirs(jsonPath)
 
-    # save to json
-    json_url = jsonPath / f"{SAT}_{cfg.producttype}_{now}.json"
-    print("\njson_url: " + str(json_url))
+    if save_json:
+        """ save as json """
+        json_url = jsonPath / f"{SAT}_{cfg.producttype}_{now}.json"
+        print("\njson_url: " + str(json_url))
 
-    with open(str(json_url), 'w') as fp:
-        json.dump(edict(TO_SAVE), fp, ensure_ascii=False, indent=4)
+        with open(str(json_url), 'w') as fp:
+            json.dump(edict(QueryInfo), fp, ensure_ascii=False, indent=4)
 
 
-    """ save as geojson """
-    import geojson
-    with open(jsonPath / f"S1_{cfg.producttype}_{now}.geojson", 'w') as fp:
-        geojson.dump(api.to_geojson(products), fp, indent=4)
+        """ save as geojson """
+        import geojson
+        with open(jsonPath / f"S1_{cfg.producttype}_{now}.geojson", 'w') as fp:
+            geojson.dump(api.to_geojson(products), fp, indent=4)
 
 
     print()
-    print(footprint)
-    print("\nTotal Number of Searched Products:" + str(len(TO_SAVE["results"]['products_list'])))
+    # print(footprint)
+    print("\nTotal Number of Searched Products:" + str(len(QueryInfo["results"]['products_list'])))
+
+    return QueryInfo
 
 
+def download_sentinel_data(QueryInfo):
+    cfg = QueryInfo.cfg
+    sat_folder = Path(cfg.sat_folder)
+    pprint(cfg)
+    
     """ If a product doesn't exist, then download one by one. """ 
     if cfg.download_one:
         # savePath = Path("G:/PyProjects/sentinelhub-auto-query/data/S1_GRD")
         # savePath = workpath / "data" / "S1_GRD"
         # if not os.path.exists(savePath): os.makedirs(savePath)
         # for key in products.keys():
-        for filename in TO_SAVE["results"]['products_list']:
+        for filename in QueryInfo["results"]['products_list']:
             # filename = products[key]['title']
-            uuid = TO_SAVE["products"][filename]['uuid']
+            uuid = QueryInfo["products"][filename]['uuid']
 
-            if os.path.exists(str(savePath / f"{filename}.zip")):
+            if os.path.exists(str(sat_folder / f"{filename}.zip")):
                 print(filename + " [existed!]")
             else:
                 
-                sentinelsat_cmd_download(uuid, filename, savePath)
+                sentinelsat_cmd_download(uuid, filename, sat_folder)
                 # api.download(id=uuid, directory_path=savePath, checksum=True)
 
 
-    """ download all once. """
-    if cfg.download_all:
-        to_download_products = {}
-        for filename in TO_SAVE["results"]['products_list']:
-            uuid = TO_SAVE["products"][filename]['uuid']
-            to_download_products[uuid] = TO_SAVE["products"][filename]
+    # """ download all once. """
+    # if cfg.download_all:
+    #     to_download_products = {}
+    #     for filename in QueryInfo["results"]['products_list']:
+    #         uuid = QueryInfo["products"][filename]['uuid']
+    #         to_download_products[uuid] = QueryInfo["products"][filename]
 
-        # print(to_download_products)
+    #     # print(to_download_products)
 
-        # api.download_all(to_download_products, directory_path=jsonPath, 
-        #             max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
+    #     # api.download_all(to_download_products, directory_path=jsonPath, 
+    #     #             max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
 
-        api.download_all(products_df.index, directory_path=jsonPath, 
-                    max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
+    #     api.download_all(products_df.index, directory_path=jsonPath, 
+    #                 max_attempts=10, checksum=True, n_concurrent_dl=1, let_retry_delay=600)
 
+
+if __name__ == "__main__":
+
+    cfg = edict({
+        "roi_url": "inputs/BC_ROIs.geojson",
+
+        "platformname": "Sentinel-1", # Sentinel-2
+        "producttype": 'GRD', # S2MSI1C, S2MSI2A
+
+        "start_date": None,
+        "end_date": None,
+
+        "download_flag": True,
+        "datafolder": "D:/Sentinel_Hub", # where to save data
+    
+    })
+
+    query_info = query_sentinel_data(cfg)
+    download_sentinel_data(query_info)
+
+    
 
 
 
