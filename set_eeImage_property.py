@@ -20,22 +20,23 @@ def load_json(url) -> edict:
 collection_folder = "users/omegazhangpzh/Sentinel1/"
 
 fileList = [
-    "S1A_IW_GRDH_1SDV_20210719T013906_20210719T013931_038840_04954C_9B58"
+    "S1A_IW_GRDH_1SDV_20210720T141310_20210720T141327_038862_0495F7_B2E8",
+    # "S1A_IW_GRDH_1SDV_20210720T141151_20210720T141220_038862_0495F7_D53A",
 ]
 
 
 eeUser = "omegazhangpzh"
 gs_dir = "gs://sar4wildfire/Sentinel1"
-folder = "S1_GRD"
+folder = "S1_GRD_2021-07-20T193552"
 
 import glob
-json_folder = Path("G:/PyProjects/sentinelhub-auto-query/outputs/BC_ROIs")
-json_url = sorted(glob.glob(str(json_folder / f"{folder}*.json")))[-1]
+json_folder = Path("D:/Sentinel_Hub/outputs/BC_ROIS")
+json_url = sorted(glob.glob(str(json_folder / f"{folder}.json")))[-1]
 print("\njson: " + os.path.split(json_url)[-1])
 
 query_info = load_json(json_url)
 
-from main_product_wise_auto_upload import set_image_property
+from update_sentinel_for_gee import set_image_property
 
 fileListCopy = fileList.copy()
 

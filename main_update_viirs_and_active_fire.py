@@ -11,18 +11,18 @@ if __name__ == "__main__":
     
     # independent processes
     processes = (
-            # 'update_active_fire.py', 
-            # 'update_viirs_nrt.py',
-            'sentinel_query_download.py',
-            'update_sentinel_for_gee.py'
+            'update_active_fire.py', 
+            'update_viirs_nrt.py',
+            # 'Step1_S1_GRD_auto_query.py',
+            # 'update_S1_GRD_for_GEE.py'
         )
 
     # dependent processes
     other = ()
 
-    # run every 2 hours
+    # run every 6 hours
     while(True):
-        
+
         pool = Pool(processes=len(processes)+len(other)) 
         pool.map(run_process, processes)
         pool.map(run_process, other)
