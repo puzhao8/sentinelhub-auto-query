@@ -41,8 +41,8 @@ def query_sentinel_data(cfg, save_json=True):
 
     now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
-    if cfg.start_date is None: start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
-    if cfg.end_date is None: end_date = (datetime.today() + timedelta(2)).strftime("%Y-%m-%d")
+    if cfg.start_date is None: cfg.start_date = (datetime.today() + timedelta(-1)).strftime("%Y-%m-%d")
+    if cfg.end_date is None: cfg.end_date = (datetime.today() + timedelta(1)).strftime("%Y-%m-%d")
     print("now: ", now)
 
     cfg.update({
@@ -51,8 +51,8 @@ def query_sentinel_data(cfg, save_json=True):
         "query_by": "roi", # 'place' has problem
 
         "query_date": today,
-        "start_date": start_date,
-        "end_date": end_date,
+        "start_date": cfg.start_date,
+        "end_date": cfg.end_date,
 
         "platformname": cfg.platformname, # Sentinel-2
         "producttype": cfg.producttype, # S2MSI1C, S2MSI2A
@@ -63,8 +63,9 @@ def query_sentinel_data(cfg, save_json=True):
         "download_flag": cfg.download_flag,
         "download_one": True, # download one by one
         "download_all": True, # download all once
-
     })
+
+    pprint(cfg)
 
     Sat_Abb_Dict = {
         'Sentinel-1': 'S1',
@@ -118,7 +119,7 @@ def query_sentinel_data(cfg, save_json=True):
                             platformname=cfg.platformname,
                             producttype=cfg.producttype,
                             order_by='+beginposition',
-                            cloudcoverpercentage=(0,30), # for S2 only
+                            cloudcoverpercentage=(0,cfg.cloudcoverpercentage), # for S2 only
                         )
     
 
@@ -242,19 +243,23 @@ def download_sentinel_data(QueryInfo):
 
 if __name__ == "__main__":
 
-    cfg = edict({
-        "roi_url": "inputs/BC_ROIs.geojson",
+    # cfg = edict({
+    #     "roi_url": "inputs/BC_ROIs.geojson",
 
-        "platformname": "Sentinel-1", # Sentinel-2
-        "producttype": 'GRD', # S2MSI1C, S2MSI2A
+    #     "platformname": "Sentinel-1", # Sentinel-2
+    #     "producttype": 'GRD', # S2MSI1C, S2MSI2A
 
-        "start_date": None,
-        "end_date": None,
+    #     "start_date": None,
+    #     "end_date": None,
 
-        "download_flag": True,
-        "datafolder": "D:/Sentinel_Hub", # where to save data
+    #     "download_flag": False,
+    #     "datafolder": "D:/Sentinel_Hub", # where to save data
     
-    })
+    # })
+
+    from config.sentinel1 import cfg
+    # from config.sentinel2 import cfg
+    cfg = edict(cfg)
 
     query_info = query_sentinel_data(cfg)
     download_sentinel_data(query_info)

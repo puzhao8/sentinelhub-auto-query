@@ -12,6 +12,8 @@ from glob import glob
 import numbers
 from pathlib import Path
 import shutil
+import ee
+ee.Initialize()
 
 # from ee import data
 # from numpy.char import startswith
@@ -243,21 +245,29 @@ def viirs_preprocessing_and_upload(dataPath):
         url = dataPath / "COG" / file
         print(url)
         filename = file[:-4].replace(".", "_")
-        
-        rprjDir = Path(f"{os.path.split(url)[0]}_rprj")
-        if not os.path.exists(rprjDir): os.makedirs(rprjDir)
 
-        dst_url = rprjDir / f"{filename}.tif"
-        tmp_url = rprjDir / f"{filename}_tmp.tif"
-        os.system(f"gdalwarp {url} {tmp_url} -t_srs EPSG:4326 -r bilinear -ts 1200 1200 -dstnodata 0")
-        os.system(f"gdal_translate {tmp_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
-        
-        if isfile(tmp_url): os.remove(tmp_url)
-        
-        os.system(f"gsutil -m cp -r {dst_url} {gs_dir}/")
-        os.system(f"earthengine upload image --force --asset_id={VIIRS_NRT_ImgCol}/{filename} {gs_dir}/{filename}.tif")
+        # if is not available in gee, then upload 
+        if(ee.ImageCollection("users/omegazhangpzh/VIIRS_NRT")
+                .filter(ee.Filter.eq("system:index", filename)).size().getInfo() == 0):
 
-        dstList.append(filename)
+            rprjDir = Path(f"{os.path.split(url)[0]}_rprj")
+            if not os.path.exists(rprjDir): os.makedirs(rprjDir)
+
+            dst_url = rprjDir / f"{filename}.tif"
+            tmp_url = rprjDir / f"{filename}_tmp.tif"
+            os.system(f"gdalwarp {url} {tmp_url} -t_srs EPSG:4326 -r bilinear -ts 1200 1200 -dstnodata 0")
+            os.system(f"gdal_translate {tmp_url} {dst_url} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW")
+            
+            if isfile(tmp_url): os.remove(tmp_url)
+            
+            os.system(f"gsutil -m cp -r {dst_url} {gs_dir}/")
+            os.system(f"earthengine upload image --force --asset_id={VIIRS_NRT_ImgCol}/{filename} {gs_dir}/{filename}.tif")
+
+            dstList.append(filename)
+
+        else:
+            print(f"{filename}: [already in GEE!]")
+
     return dstList
 
 
@@ -272,7 +282,7 @@ if __name__ == "__main__":
 
 
     # workspace = Path(os.getcwd())
-    eeImgColName = "VIIRS_NRT_test"
+    eeImgColName = "VIIRS_NRT"
 
     workspace = Path("D:/Sentinel_Hub")
     dataPath = workspace / 'data' / eeImgColName
@@ -285,7 +295,8 @@ if __name__ == "__main__":
     print(f"julian_today: {julian_today}")
 
     for julian_day in range(julian_today, julian_today+1):
-        download_viirs_on(julian_day, hh_list=['10', '11'], vv_list =['03'])
+        download_viirs_on(julian_day, hh_list=['10', '11'], vv_list =['02', '03', '04', '05'])
+        download_viirs_on(julian_day, hh_list=['08', '09'], vv_list =['04', '05'])
         
     fileList = viirs_preprocessing_and_upload(dataPath)
     pprint(fileList)
@@ -319,9 +330,12 @@ if __name__ == "__main__":
                 # set_image_property(asset_id, query_info)
                 os.system(f'earthengine asset set --time_start {standard_date} {asset_id}')
                 # os.system(f'earthengine asset set --index {standard_date.replace("-","_")} {asset_id}')
-                fileListCopy.remove(filename)
-
-                print(f"{asset_id} [set time_start!]")
+                
+                try:
+                    fileListCopy.remove(filename)
+                    print(f"{asset_id} [set time_start!]")
+                except:
+                    print(f"{asset_id} [failed to remove!]")
             else:
                 print(f"{asset_id} [Not Ready in GEE!]")
 

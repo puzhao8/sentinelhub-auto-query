@@ -78,8 +78,14 @@ def set_image_property(asset_id, query_info):
     product_id = os.path.split(asset_id)[-1]
     product_info = query_info['products'][product_id]
 
-    time_start = datetime.strptime(product_id.split("_")[4], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
-    time_end = datetime.strptime(product_id.split("_")[5], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
+    if 'S1' in product_id:
+        time_start = datetime.strptime(product_id.split("_")[4], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
+        time_end = datetime.strptime(product_id.split("_")[5], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
+    
+    if 'S2' in product_id:
+        time_start = datetime.strptime(product_id.split("_")[2], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
+        time_end = datetime.strptime(product_id.split("_")[-1], "%Y%m%dT%H%M%S").strftime("%Y-%m-%dT%H:%M:%S")
+
     # footprint = product_info['footprint']
 
     print()
@@ -143,7 +149,7 @@ def upload_cog_into_eeImgCol(dataPath, gs_dir, fileList=None, upload_flag=True, 
             print("--------------------------------------------------------------------")
 
             asset_id = f"{eeImgCol}/{filename}"
-            ee_upload_image = f"earthengine upload image --asset_id={asset_id} {gs_dir}/{filename}.tif"
+            ee_upload_image = f"earthengine upload image --force --asset_id={asset_id} {gs_dir}/{filename}.tif"
 
             ee_upload_response = subprocess.getstatusoutput(ee_upload_image)[1]
             task_id = ee_upload_response.split("ID: ")[-1]
@@ -265,7 +271,7 @@ def sentinel_preprocessing_and_upload(cfg, query_info):
 
         for filename in fileList:            
             input_url = input_folder / f"{filename}.zip"
-            if os.path.exists(input_url):
+            if (os.path.exists(input_url)) and (filename not in TASK_DICT.keys()):
 
                 print("\n\n\n")    
                 print(filename)
@@ -314,7 +320,11 @@ def sentinel_preprocessing_and_upload(cfg, query_info):
 
             if asset_id in asset_list:
                 set_image_property(asset_id, query_info)
-                fileListCopy.remove(filename)
+                try:
+                    fileListCopy.remove(filename) # remove item from list after finishing uploading
+                    print(f"{filename}: [removed!]")
+                except:
+                    print(f"{filename}: [failed to remove!]")
             else:
                 print(f"{asset_id} [Not Ready in GEE!]")
 
@@ -322,31 +332,33 @@ def sentinel_preprocessing_and_upload(cfg, query_info):
 
 if __name__ == "__main__":
 
-    cfg = edict({
-        # query parameters
-        "roi_url": "inputs/BC_ROIs.geojson",
+    # cfg = edict({
+    #     # query parameters
+    #     "roi_url": "inputs/BC_ROIs.geojson",
 
-        "platformname": "Sentinel-1", # Sentinel-2
-        "producttype": 'GRD', # S2MSI1C, S2MSI2A
+    #     "platformname": "Sentinel-1", # Sentinel-2
+    #     "producttype": 'GRD', # S2MSI1C, S2MSI2A
 
-        "start_date": None,
-        "end_date": None,
+    #     "start_date": None,
+    #     "end_date": None,
 
-        # download parameters
-        "download_flag": True,
-        "datafolder": "D:/Sentinel_Hub", # where to save data
+    #     # download parameters
+    #     "download_flag": True,
+    #     "datafolder": "D:/Sentinel_Hub", # where to save data
 
 
-        # upload parameters
-        "eeUser": "omegazhangpzh",
-        "gs_dir": "gs://sar4wildfire/Sentinel1",
-        "graph_url": "G:\PyProjects\sentinelhub-auto-query\graphs\S1_GRD_preprocessing_GEE.xml"
+    #     # upload parameters
+    #     "eeUser": "omegazhangpzh",
+    #     "gs_dir": "gs://sar4wildfire/Sentinel1",
+    #     "graph_url": "G:\PyProjects\sentinelhub-auto-query\graphs\S1_GRD_preprocessing_GEE.xml"
 
-    })
+    # })
 
-    
+    from config.sentinel1 import cfg
+    # from config.sentinel2 import cfg
     from sentinel_query_download import query_sentinel_data, download_sentinel_data
 
+    cfg = edict(cfg)
     query_info = query_sentinel_data(cfg, save_json=False)
     # download_sentinel_data(query_info)
     sentinel_preprocessing_and_upload(cfg, query_info)

@@ -23,3 +23,7 @@ $ snap-conf C:\Anaconda3\envs\snap\python G:\PyProjects\sentinelhub-auto-query\o
 
 copy generated snappy folder into envs you would like to use:
 C:\Anaconda3\envs\snap\Lib\site-packages\
+
+
+## install ESA-SNAP in Linux
+sudo chmod +x esa-snap_all_unix_8_0.sh

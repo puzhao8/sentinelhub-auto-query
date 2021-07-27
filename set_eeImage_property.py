@@ -17,17 +17,17 @@ def load_json(url) -> edict:
 
 # https://developers.google.com/earth-engine/guides/command_line
 # collection_folder = "projects/ee-globalchange-gee4geo/assets/Sentinel1/"
-collection_folder = "users/omegazhangpzh/Sentinel1/"
 
 fileList = [
-    "S1A_IW_GRDH_1SDV_20210720T141310_20210720T141327_038862_0495F7_B2E8",
-    # "S1A_IW_GRDH_1SDV_20210720T141151_20210720T141220_038862_0495F7_D53A",
+    "S2B_MSIL1C_20210726T185919_N0301_R013_T10UEB_20210726T211239",
+    "S2B_MSIL1C_20210726T185919_N0301_R013_T10UEV_20210726T211239",
 ]
 
 
 eeUser = "omegazhangpzh"
-gs_dir = "gs://sar4wildfire/Sentinel1"
-folder = "S1_GRD_2021-07-20T193552"
+gs_dir = f"gs://sar4wildfire/Sentinel2"
+folder = "S2_S2MSI1C_2021-07-27T154616"
+imgCol_name = os.path.split(gs_dir)[-1]
 
 import glob
 json_folder = Path("D:/Sentinel_Hub/outputs/BC_ROIS")
@@ -47,7 +47,7 @@ while(len(fileListCopy) > 0):
     asset_list = response[1].replace("projects/earthengine-legacy/assets/", "").split("\n")
 
     for filename in fileList:
-        asset_id = "users/omegazhangpzh/Sentinel1/" + filename
+        asset_id = f"users/omegazhangpzh/{imgCol_name}/" + filename
 
         if asset_id in asset_list:
             set_image_property(asset_id, query_info)
