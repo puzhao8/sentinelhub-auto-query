@@ -257,8 +257,8 @@ if __name__ == "__main__":
     
     # })
 
-    from config.sentinel1 import cfg
-    # from config.sentinel2 import cfg
+    # from config.sentinel1 import cfg
+    from config.sentinel2 import cfg
     cfg = edict(cfg)
 
     query_info = query_sentinel_data(cfg)
