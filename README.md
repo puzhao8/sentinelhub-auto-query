@@ -29,7 +29,7 @@ conda env update --file env.yml --prune
 ```
 
 ## 4. gcloud insallation and initializing
-https://cloud.google.com/sdk/docs/install <\br>
+https://cloud.google.com/sdk/docs/install </br>
 https://cloud.google.com/sdk/docs/initializing
 
 ``` bash
@@ -44,7 +44,7 @@ gcloud config set project [project-name]
 python main_run_multi_scripts.py 
 ```
 
-This command line will run sentinel_query_download.py and update_sentinel_for_gee.py at the same time, and you need to choose the satellite you would like to download and process.
+This command line will run sentinel_query_download.py and update_sentinel_for_gee.py at the same time, and you need to choose the satellite data you would like to download and process by commenting the other in both scripts.
 ``` python
 from config.sentinel1 import cfg
 from config.sentinel2 import cfg
