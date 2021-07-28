@@ -228,6 +228,7 @@ def check_status_and_set_property(task_dict, query_info):
 def sentinel_preprocessing_and_upload(cfg, query_info):
     # cfg.update(query_info.cfg) 
     cfg = query_info.cfg
+    workpath = Path(os.getcwd())
 
     gs_dir = cfg.gs_dir
     eeUser = cfg.eeUser
@@ -235,7 +236,7 @@ def sentinel_preprocessing_and_upload(cfg, query_info):
 
     # workPath = Path(os.getcwd()) # Project Folder
     ### update input and output url
-    graphFile = FileReader(str(cfg.graph_url))
+    graphFile = FileReader(str(workpath / cfg.graph_url))
     graph = GraphIO.read(graphFile)
     
     input_folder = cfg.datafolder / "data" / cfg.sat_folder
@@ -354,8 +355,8 @@ if __name__ == "__main__":
 
     # })
 
-    # from config.sentinel1 import cfg
-    from config.sentinel2 import cfg
+    from config.sentinel1 import cfg
+    # from config.sentinel2 import cfg
     from sentinel_query_download import query_sentinel_data, download_sentinel_data
 
     cfg = edict(cfg)
