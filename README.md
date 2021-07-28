@@ -2,9 +2,9 @@
 
 # Config Environment
 ## 1. Install anaconda
-
+https://docs.anaconda.com/anaconda/install/index.html
 ## 2. Install ESA SNAP Desktop Software 
-
+https://step.esa.int/main/download/snap-download/
 
 ### 2.1 config snappy (ESA SNAP python library)
 snappy only supports python 2.7 and python 3.6 (python 3.6 is recommended.)
@@ -29,7 +29,7 @@ conda env update --file env.yml --prune
 ```
 
 ## 4. gcloud insallation and initializing
-https://cloud.google.com/sdk/docs/install
+https://cloud.google.com/sdk/docs/install <\br>
 https://cloud.google.com/sdk/docs/initializing
 
 ``` bash
