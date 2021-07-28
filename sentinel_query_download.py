@@ -26,7 +26,7 @@ def is_jsonable(x):
         return False
 
 # cmd
-def sentinelsat_cmd_download(uuid, filename, path, user="ahui0911", password="19940911"):
+def sentinelsat_cmd_download(uuid, filename, path, user="puzhao", password="kth10044ESA!"):
     geojson_url = path / f"{filename}.geojson"
     os.system(f"sentinelsat -u {user} -p {password}  --uuid {uuid} -d --path {path} \
         --footprints {geojson_url}")
@@ -37,6 +37,7 @@ def query_sentinel_data(cfg, save_json=True):
 
     # api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
     user, password = "ahui0911", "19940911"
+
     api = SentinelAPI(user, password, 'https://scihub.copernicus.eu/dhus')
 
     now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
@@ -94,16 +95,11 @@ def query_sentinel_data(cfg, save_json=True):
         roi_name = cfg.placename.replace(" ","_")
     # print(BC)
 
-    ### DSC rorb = 22
-    if cfg.platformname == "Sentinel-1": 
+    ### DSC rorb = 22      
+    if cfg.platformname == "Sentinel-1":
         cfg.checkProperty = "system:index"
         cfg.check_eeImgCol = "COPERNICUS/S1_GRD"
 
-    if cfg.platformname == "Sentinel-2": 
-        cfg.checkProperty = "PRODUCT_ID"
-        cfg.check_eeImgCol = "COPERNICUS/S2"  if 'S2MSI1C' == cfg.producttype else "COPERNICUS/S2_SR"
-
-    if cfg.platformname == "Sentinel-1":
         products = api.query(
                             footprint, 
                             date=(cfg.start_date.replace("-",""), cfg.end_date.replace("-","")), 
@@ -113,6 +109,9 @@ def query_sentinel_data(cfg, save_json=True):
                         )
     
     else: # S2, S3 ...
+        cfg.checkProperty = "PRODUCT_ID"
+        cfg.check_eeImgCol = "COPERNICUS/S2"  if 'S2MSI1C' == cfg.producttype else "COPERNICUS/S2_SR"
+
         products = api.query(
                             footprint, 
                             date=(cfg.start_date.replace("-",""), cfg.end_date.replace("-","")), 
@@ -143,13 +142,15 @@ def query_sentinel_data(cfg, save_json=True):
     checkImgCol = ee.ImageCollection(f"{cfg.check_eeImgCol}")
 
     if SAT == "S1": 
-        checkImgCol = (ee.ImageCollection("users/omegazhangpzh/Sentinel1"))
-    if SAT == "S2": checkImgCol = checkImgCol.merge(ee.ImageCollection("users/omegazhangpzh/Sentinel2"))
+        sentinel_asset = ee.ImageCollection("users/omegazhangpzh/Sentinel1")
+    if SAT == "S2": 
+        sentinel_asset = ee.ImageCollection("users/omegazhangpzh/Sentinel2")
 
     for product_id in products_dict.keys():
-        
         title = products_dict[product_id]['title']
-        flag = (checkImgCol.filter(ee.Filter.eq(cfg.checkProperty, title)).size().getInfo()) > 0 
+        filtered_size = ee.Number(checkImgCol.filter(ee.Filter.eq(cfg.checkProperty, title)).size())\
+                    .add(sentinel_asset.filter(ee.Filter.eq(cfg.checkProperty, title)).size()).getInfo()
+        flag = filtered_size > 0 
         print(title, flag)
         if not flag: # if this product is not available in GEE
             # print(title)
