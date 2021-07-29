@@ -13,7 +13,7 @@ cfg = {
         "producttype": 'GRD', # S2MSI1C, S2MSI2A
 
         # download parameters
-        "download_flag": False,
+        "download_flag": True,
         "datafolder": "D:/Sentinel_Hub", # where to save data
 
         # upload parameters
