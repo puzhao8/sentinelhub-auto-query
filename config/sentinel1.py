@@ -5,7 +5,7 @@ cfg = {
         # "start_date": None, # None for the day before today
         # "end_date": None, # None for the day after today
 
-        "roi_url": "inputs/S1_split_US.geojson",
+        "roi_url": "inputs/S1_split_BC.geojson",
         "start_date": None, # None for the day before today
         "end_date": None, # None for the day after today
 
@@ -15,6 +15,8 @@ cfg = {
         # download parameters
         "download_flag": True,
         "datafolder": "D:/Sentinel_Hub", # where to save data
+        "user": 'puzhao', # ahui0911
+        "password": 'kth10044ESA!', # 19940911
 
         # upload parameters
         "eeUser": "omegazhangpzh",

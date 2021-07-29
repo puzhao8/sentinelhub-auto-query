@@ -13,6 +13,9 @@ cfg = {
         "download_flag": True,
         "datafolder": "D:/Sentinel_Hub", # where to save data
 
+        "user": 'puzhao', # ahui0911
+        "password": 'kth10044ESA!', # 19940911
+
         # upload parameters
         "eeUser": "omegazhangpzh",
         "gs_dir": "gs://sar4wildfire/Sentinel2",

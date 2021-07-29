@@ -36,9 +36,9 @@ def query_sentinel_data(cfg, save_json=True):
 
 
     # api = SentinelAPI('puzhao', 'kth10044ESA!', 'https://scihub.copernicus.eu/dhus')
-    user, password = "ahui0911", "19940911"
+    # user, password = "ahui0911", "19940911"
 
-    api = SentinelAPI(user, password, 'https://scihub.copernicus.eu/dhus')
+    api = SentinelAPI(cfg.user, cfg.password, 'https://scihub.copernicus.eu/dhus')
 
     now = datetime.now().strftime("%Y-%m-%dT%H%M%S")
     today = datetime.today().strftime("%Y-%m-%d")
@@ -225,7 +225,7 @@ def download_sentinel_data(QueryInfo):
             if os.path.exists(str(sat_folder / f"{filename}.zip")):
                 print(filename + " [existed!]")
             else:
-                sentinelsat_cmd_download(uuid, filename, sat_folder)
+                sentinelsat_cmd_download(uuid, filename, sat_folder, cfg.user, cfg.password)
                 # api.download(id=uuid, directory_path=savePath, checksum=True)
 
 
@@ -261,8 +261,8 @@ if __name__ == "__main__":
     
     # })
 
-    from config.sentinel1 import cfg
-    # from config.sentinel2 import cfg
+    # from config.sentinel1 import cfg
+    from config.sentinel2 import cfg
     cfg = edict(cfg)
 
     query_info = query_sentinel_data(cfg)
