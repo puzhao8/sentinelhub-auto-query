@@ -303,7 +303,7 @@ def sentinel_preprocessing_and_upload(cfg, query_info):
                     upload_finish_flag = check_status_and_set_property(TASK_DICT, query_info)
             
             elif filename in TASK_DICT.keys():
-                print(f"{filename} [uploading!]")
+                print(f"{filename} [uploaded!]")
             else:
                 print(f"{filename} [not existed!]")
 
