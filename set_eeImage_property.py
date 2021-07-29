@@ -19,19 +19,19 @@ def load_json(url) -> edict:
 # collection_folder = "projects/ee-globalchange-gee4geo/assets/Sentinel1/"
 
 fileList = [
-    "S1A_IW_GRDH_1SDV_20210727T021138_20210727T021203_038957_0498BA_8C79",
-    "S1A_IW_GRDH_1SDV_20210727T021228_20210727T021253_038957_0498BA_6A4A",
-    "S1A_IW_GRDH_1SDV_20210727T021203_20210727T021228_038957_0498BA_26AE"
+    # "S1A_IW_GRDH_1SDV_20210727T021138_20210727T021203_038957_0498BA_8C79",
+    # "S1A_IW_GRDH_1SDV_20210727T021228_20210727T021253_038957_0498BA_6A4A",
+    "S1B_IW_GRDH_1SDV_20210728T020336_20210728T020401_027988_0356CA_47DE"
 ]
 
 
 eeUser = "omegazhangpzh"
 gs_dir = f"gs://sar4wildfire/Sentinel1"
-folder = "S1_GRD_2021-07-28T152134"
+folder = "S1_GRD_2021-07-29T122510"
 imgCol_name = os.path.split(gs_dir)[-1]
 
 import glob
-json_folder = Path("D:/Sentinel_Hub/outputs/BC_ROIS")
+json_folder = Path("D:\Sentinel_Hub\outputs\BC_ALB_ROI")
 json_url = sorted(glob.glob(str(json_folder / f"{folder}.json")))[-1]
 print("\njson: " + os.path.split(json_url)[-1])
 

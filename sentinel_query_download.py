@@ -121,7 +121,6 @@ def query_sentinel_data(cfg, save_json=True):
                             cloudcoverpercentage=(0,cfg.cloudcoverpercentage), # for S2 only
                         )
     
-
     # print(products['0c05435b-0cd3-45a0-93f4-8c317eb1d558'])
     print("\n\n===========> Sentinel Auto-Query <============")
 
@@ -131,8 +130,11 @@ def query_sentinel_data(cfg, save_json=True):
     # pprint(products_df[['sensoroperationalmode', 'orbitdirection', 'relativeorbitnumber']])
 
     products_dict = products_df.transpose().to_dict()
-    example_dict = products_dict[products_df.index.tolist()[0]]
-    property_list = [key for key in example_dict.keys() if is_jsonable(example_dict[key])]
+    
+    products_list = products_df.index.tolist()
+    if len(products_list) > 0: 
+        example_dict = products_dict[products_list[0]]
+        property_list = [key for key in example_dict.keys() if is_jsonable(example_dict[key])]
     # pprint(products_dict.keys())
 
 
@@ -152,6 +154,8 @@ def query_sentinel_data(cfg, save_json=True):
                     .add(sentinel_asset.filter(ee.Filter.eq(cfg.checkProperty, title)).size()).getInfo()
         flag = filtered_size > 0 
         print(title, flag)
+
+        # flag = False
         if not flag: # if this product is not available in GEE
             # print(title)
             # print(title, flag.getInfo())
@@ -221,7 +225,6 @@ def download_sentinel_data(QueryInfo):
             if os.path.exists(str(sat_folder / f"{filename}.zip")):
                 print(filename + " [existed!]")
             else:
-                
                 sentinelsat_cmd_download(uuid, filename, sat_folder)
                 # api.download(id=uuid, directory_path=savePath, checksum=True)
 

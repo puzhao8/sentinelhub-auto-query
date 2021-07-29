@@ -27,4 +27,4 @@ if __name__ == "__main__":
         pool.map(run_process, processes)
         pool.map(run_process, other)
 
-        time.sleep(4*60*60)
+        # time.sleep(4*60*60)
