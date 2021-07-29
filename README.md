@@ -7,6 +7,11 @@ https://docs.anaconda.com/anaconda/install/index.html
 conda env create -f env1.yml
 ```
 
+https://developers.google.com/earth-engine/guides/command_line
+``` bash
+earthengine authenticate
+```
+
 ## 2. Install ESA SNAP Desktop Software 
 https://step.esa.int/main/download/snap-download/
 choose python 3.6 as interpreter
@@ -29,6 +34,8 @@ https://cloud.google.com/sdk/docs/initializing
 ``` bash
 gcloud init
 gcloud auth login
+```
+``` bash
 gcloud config set project [project-name]
 ```
 

@@ -1,4 +1,5 @@
-import os, time                                                                       
+import os, time 
+from datetime import datetime                                                                      
 from multiprocessing import Pool                                                
                                                                                                                                                                                                                                                                                              
 def run_process(process):   
@@ -22,7 +23,13 @@ if __name__ == "__main__":
 
     # run every 6 hours
     while(True):
+        
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        hour = now.split("T")[1]
 
-        pool = Pool(processes=len(processes)+len(other)) 
-        pool.map(run_process, processes)
-        pool.map(run_process, other)
+        if('10:00:00' == hour):
+            print(f"===> updated on {now}")
+
+            pool = Pool(processes=len(processes)+len(other)) 
+            pool.map(run_process, processes)
+            pool.map(run_process, other)

@@ -19,5 +19,5 @@ cfg = {
         # upload parameters
         "eeUser": "omegazhangpzh",
         "gs_dir": "gs://sar4wildfire/Sentinel2",
-        "graph_url": "G:\PyProjects\sentinelhub-auto-query\graphs\S2_resamping_graph.xml"
+        "graph_url": "graphs\S2_resamping_graph.xml"
     }
